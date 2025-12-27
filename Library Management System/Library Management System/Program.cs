@@ -58,9 +58,9 @@ class Program
     public static void Main(string[] args)
     {
        
-        var book1 = new Book("1984", 1, "George Orwell");
-        var book2 = new Book("Clean Code", 2, "Robert C. Martin");
-        var magazine = new Magazine("National Geographic", 1001, 202);
+        var book1 = new Book("Lalsalu", 101, "Syed Waliullah");
+        var book2 = new Book("Shonkhonil Karagar", 102, "Humayun Ahmed");
+        var magazine = new Magazine("Shaptahik 2000", 201, 42);
 
         
         Console.WriteLine("Library items:");
@@ -72,7 +72,7 @@ class Program
         Console.WriteLine();
 
         
-        Console.WriteLine("Borrowing item: 1984 (Item ID 1)");
+        Console.WriteLine("Borrowing item: Lalsalu (Item ID 101)");
         book1.IsAvailable = false;
         Console.WriteLine();
 

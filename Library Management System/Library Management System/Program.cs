@@ -1,6 +1,4 @@
-﻿using System;
-
-class LibraryItem
+﻿class LibraryItem
 {
     public string Title { get; set; }
     public int ItemId { get; set; }
@@ -57,16 +55,15 @@ class Magazine : LibraryItem
 
 class Program
 {
-    static void Main()
+    public static void Main(string[] args)
     {
-        // Create items
+       
         var book1 = new Book("1984", 1, "George Orwell");
         var book2 = new Book("Clean Code", 2, "Robert C. Martin");
         var magazine = new Magazine("National Geographic", 1001, 202);
 
-        // Display all items
+        
         Console.WriteLine("Library items:");
-        Console.WriteLine("----------------");
         book1.DisplayInfo();
         Console.WriteLine();
         book2.DisplayInfo();
@@ -74,14 +71,13 @@ class Program
         magazine.DisplayInfo();
         Console.WriteLine();
 
-        // Demonstrate borrowing an item
+        
         Console.WriteLine("Borrowing item: 1984 (Item ID 1)");
         book1.IsAvailable = false;
         Console.WriteLine();
 
-        // Display updated info for the borrowed item
+        
         Console.WriteLine("Updated item info for borrowed book:");
-        Console.WriteLine("------------------------------------");
         book1.DisplayInfo();
     }
 }

@@ -5,5 +5,5 @@
 ### IDE
 -------
 https://visualstudio.microsoft.com/ <br>
-https://www.jetbrains.com/rider/
+https://www.jetbrains.com/rider/ <br>
 https://www.sololearn.com/

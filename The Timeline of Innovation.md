@@ -4,7 +4,7 @@
 
 _From a Windows-only language to a unified, cross-platform ecosystem_
 
-![.NET](https://img.shields.io/badge/.NET-5%2B-purple)
+![.NET](https://img.shields.io/badge/.NET-8%2B-purple)
 ![CSharp](https://img.shields.io/badge/C%23-Language-blue)
 ![Platform](https://img.shields.io/badge/Platform-Cross--Platform-green)
 ![Status](https://img.shields.io/badge/Status-Future--Ready-success)

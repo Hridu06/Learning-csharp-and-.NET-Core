@@ -1,16 +1,20 @@
 # 🚀 .NET Full Stack Developer Learning Roadmap
 
-![.NET](https://img.shields.io/badge/.NET-FullStack-blue)
-![C#](https://img.shields.io/badge/C%23-Learning-purple)
-![ASP.NET](https://img.shields.io/badge/ASP.NET-Core-green)
-![Status](https://img.shields.io/badge/Status-In%20Progress-orange)
+![.NET](https://img.shields.io/badge/.NET-FullStack-blue?style=for-the-badge)
+![C#](https://img.shields.io/badge/C%23-Learning-purple?style=for-the-badge)
+![ASP.NET](https://img.shields.io/badge/ASP.NET-Core-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-In%20Progress-orange?style=for-the-badge)
+
+---
+
+## 📌 About This Repository
 
 This repository documents my **learning journey toward becoming a .NET Full Stack Developer**.  
 It includes structured modules covering **C#, OOP, SQL, EF Core, ASP.NET MVC, Web API, and Software Architecture**.
 
 ---
 
-# 📊 Learning Progress
+## 📊 Learning Progress
 
 | Phase | Topic | Status |
 |------|------|------|
@@ -26,118 +30,123 @@ It includes structured modules covering **C#, OOP, SQL, EF Core, ASP.NET MVC, We
 
 ---
 
-# 📚 Phase 1: C# Core
+# 📚 Phase 1 — C# Core
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
-| 1 | Programming Fundamentals | C# Recap & Environment | .NET SDK, Console App, Syntax |
+|--------|------------|------|--------|
+| 1 | Programming Fundamentals | C# Recap & Environment | .NET SDK, Console App |
 | 2 | Data & Logic | Variables & Data Types | Value vs Reference |
-|  |  | Operators & Casting | Arithmetic, Logical |
+| 2 | Data & Logic | Operators & Casting | Arithmetic, Logical |
 | 3 | Flow Control | Conditional Statements | if, else, switch |
-|  |  | Loops | for, while, foreach |
-| 4 | Methods & Errors | Methods | Parameters, Return Types |
-|  |  | Exception Handling | try-catch |
+| 3 | Flow Control | Loops | for, while, foreach |
+| 4 | Methods & Errors | Methods | Parameters |
+| 4 | Methods & Errors | Exception Handling | try-catch |
 | 5 | Collections | Arrays & Collections | List, Dictionary |
-|  |  | String & DateTime | Real-world usage |
+| 5 | Collections | String & DateTime | Real-world usage |
 
 ---
 
-# 🧠 Phase 2: OOP & Professional C#
+# 🧠 Phase 2 — OOP & Professional C#
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
-| 6 | OOP Foundation | Class & Object | Constructor, Property |
-|  |  | Encapsulation | Access Modifiers |
+|--------|------------|------|--------|
+| 6 | OOP Foundation | Class & Object | Constructor |
+| 6 | OOP Foundation | Encapsulation | Access Modifiers |
 | 7 | OOP Advanced | Inheritance | Base / Derived |
-|  |  | Polymorphism | Virtual, Override |
-| 8 | Clean Code | Abstraction & Interface | Interface usage |
-|  |  | LINQ & SOLID | LINQ Basics, SRP |
+| 7 | OOP Advanced | Polymorphism | Virtual / Override |
+| 8 | Clean Code | Abstraction & Interface | Interface |
+| 8 | Clean Code | LINQ & SOLID | LINQ Basics |
 
 ---
 
-# 🔧 Phase 3: Git & GitHub
+# 🔧 Phase 3 — Git & GitHub
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
+|--------|------------|------|--------|
 | 9 | Git Workflow | Git Core | init, commit |
-|  |  | Collaboration | Branch, PR, Conflict |
+| 9 | Git Workflow | Collaboration | Branch, PR |
 
 ---
 
-# 🗄 Phase 4: Database & SQL
+# 🗄 Phase 4 — Database & SQL
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
+|--------|------------|------|--------|
 | 10 | Database Basics | RDBMS Concepts | Table, PK, FK |
-|  |  | Relationships | One-to-many |
+| 10 | Database Basics | Relationships | One-to-many |
 | 11 | Database Normalization | Normal Forms | 1NF, 2NF |
-|  |  | Advanced | 3NF |
-| 12 | SQL Operations | CRUD & Join | SELECT, INSERT |
-|  |  | Performance | Index |
+| 11 | Database Normalization | Advanced | 3NF |
+| 12 | SQL Operations | CRUD & Join | SELECT |
+| 12 | SQL Operations | Performance | Index |
 | 13 | Stored Procedures | Writing SP | Input/Output |
-|  |  | SP in C# | ADO.NET |
+| 13 | Stored Procedures | SP in C# | ADO.NET |
 
 ---
 
-# ⚙️ Phase 5: EF Core
+# ⚙️ Phase 5 — EF Core
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
-| 14 | EF Core Fundamentals | DbContext | DbSet, Tracking |
-|  |  | Migration | Code First |
+|--------|------------|------|--------|
+| 14 | EF Core Fundamentals | DbContext | DbSet |
+| 14 | EF Core Fundamentals | Migration | Code First |
 | 15 | EF Advanced | Relationships | Navigation Property |
-|  |  | EF vs SP | Performance |
+| 15 | EF Advanced | EF vs SP | Performance |
 
 ---
 
-# 🌐 Phase 6: ASP.NET Core MVC
+# 🌐 Phase 6 — ASP.NET Core MVC
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
-| 16 | ASP.NET Core Basics | Core Overview | Hosting, Kestrel |
-|  |  | Pipeline | Middleware |
+|--------|------------|------|--------|
+| 16 | ASP.NET Core Basics | Core Overview | Hosting |
+| 16 | ASP.NET Core Basics | Pipeline | Middleware |
 | 17 | MVC Fundamentals | MVC Flow | Request-response |
-|  |  | Routing | Attribute routing |
+| 17 | MVC Fundamentals | Routing | Attribute routing |
 | 18 | Controllers | Controller Actions | IActionResult |
-|  |  | Model Binding | Lifecycle |
+| 18 | Controllers | Model Binding | Lifecycle |
 | 19 | Views & UI | Razor | Layout |
-|  |  | Partial View | Reusable UI |
+| 19 | Views & UI | Partial View | Reusable UI |
 | 20 | Validation & DI | Validation | Data Annotation |
-|  |  | Dependency Injection | Service lifetime |
+| 20 | Validation & DI | Dependency Injection | Service lifetime |
 
 ---
 
-# 🔗 Phase 7: ASP.NET Core Web API
+# 🔗 Phase 7 — Web API
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
+|--------|------------|------|--------|
 | 21 | Web API Fundamentals | REST API | HTTP verbs |
-|  |  | API CRUD | DTO |
+| 21 | Web API Fundamentals | API CRUD | DTO |
 | 22 | API Security | JWT Authentication | Token |
-|  |  | Tools | Swagger, Postman |
+| 22 | API Security | Tools | Swagger & Postman |
 
 ---
 
-# 🏗 Phase 8: Architecture & Security
+# 🏗 Phase 8 — Architecture & Security
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
+|--------|------------|------|--------|
 | 23 | MVC Security | Authentication | Identity |
-|  |  | Authorization | Roles |
+| 23 | MVC Security | Authorization | Roles |
 | 24 | N-Tier Architecture | Layered Design | UI, BLL, DAL |
-|  |  | Responsibility | Service Layer |
+| 24 | N-Tier Architecture | Responsibility | Service Layer |
 | 25 | Repository & UoW | Repository Pattern | Generic |
-|  |  | Unit of Work | Transaction |
+| 25 | Repository & UoW | Unit of Work | Transactions |
 
 ---
 
-# 🎯 Phase 9: Capstone Project
+# 🎯 Phase 9 — Capstone Project
 
 | Module | Module Name | Class | Topics |
-|------|------|------|------|
+|--------|------------|------|--------|
 | 26 | Capstone Project | Full System Build | MVC + API |
-|  |  | Interview Preparation | GitHub & Q&A |
+| 26 | Capstone Project | Interview Preparation | GitHub Portfolio & Q&A |
 
 ---
 
-# 📁 Repository Structure
+# 🎯 Goal
+
+✔ Master C# and .NET ecosystem  
+✔ Build real-world ASP.NET applications  
+✔ Implement clean architecture patterns  
+✔ Create a strong GitHub portfolio

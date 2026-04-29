@@ -1,6 +1,11 @@
-﻿namespace LMS_Project.Pages.Shared
-{
-    public class _ProgressBar
-    {
-    }
-}
+﻿@model int
+
+<div class="progress">
+    <div class="progress-bar" role="progressbar"
+         style="width:@Model%"
+         aria-valuenow="@Model"
+         aria-valuemin="0"
+         aria-valuemax="100">
+        @Model%
+    </div>
+</div>

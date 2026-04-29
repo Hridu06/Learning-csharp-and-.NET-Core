@@ -1,6 +1,30 @@
-﻿namespace LMS_Project.Pages.Courses
-{
-    public class Edit
-    {
-    }
+﻿@page "{id:int}"
+@model LMS_Project.Pages.Courses.EditModel
+
+@{
+    ViewData["Title"] = "Edit Course";
 }
+
+<h2>Edit Course</h2>
+
+<form method="post">
+    <input type="hidden" asp-for="Course.Id" />
+
+    <div class="mb-3">
+        <label asp-for="Course.Title"></label>
+        <input asp-for="Course.Title" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Course.Description"></label>
+        <textarea asp-for="Course.Description" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Course.Credits"></label>
+        <input asp-for="Course.Credits" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-success">Update</button>
+    <a asp-page="Index" class="btn btn-secondary">Back</a>
+</form>

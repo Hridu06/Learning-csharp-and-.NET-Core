@@ -1,6 +1,33 @@
-﻿namespace LMS_Project.Pages.Dashboard
-{
-    public class Instructor
-    {
-    }
+﻿@page
+@model LMS_Project.Pages.Dashboard.InstructorModel
+
+@{
+    ViewData["Title"] = "Instructor Dashboard";
 }
+
+<h2>Instructor Dashboard</h2>
+
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h4>Total Courses</h4>
+            <h2>@Model.Dashboard.TotalCoursesTaught</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h4>Total Students</h4>
+            <h2>@Model.Dashboard.TotalStudents</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h4>Pending Assignments</h4>
+            <h2>@Model.Dashboard.PendingAssignments</h2>
+        </div>
+    </div>
+
+</div>

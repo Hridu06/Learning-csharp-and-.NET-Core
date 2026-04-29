@@ -1,6 +1,21 @@
-﻿namespace LMS_Project.Pages.Shared
-{
-    public class _EnrollmentList
-    {
-    }
-}
+﻿@model IEnumerable<LMS_Project.Models.StudentCourse>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Enrollment Date</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var enrollment in Model)
+        {
+            <tr>
+                <td>@enrollment.Student?.Name</td>
+                <td>@enrollment.EnrollmentDate.ToShortDateString()</td>
+                <td>@enrollment.Grade</td>
+            </tr>
+        }
+    </tbody>
+</table>

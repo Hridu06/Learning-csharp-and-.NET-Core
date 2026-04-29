@@ -1,6 +1,14 @@
-﻿namespace LMS_Project.Pages.Shared
-{
-    public class _AssignmentSection
+﻿@model IEnumerable<LMS_Project.Models.Assignment>
+
+<h4>Assignments</h4>
+
+<ul class="list-group">
+    @foreach (var assignment in Model)
     {
+        <li class="list-group-item">
+            <strong>@assignment.Title</strong> -
+            Due: @assignment.DueDate.ToShortDateString()
+            (Points: @assignment.MaxPoints)
+        </li>
     }
-}
+</ul>

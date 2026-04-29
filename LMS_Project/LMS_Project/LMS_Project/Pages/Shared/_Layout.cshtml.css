@@ -1,48 +1,106 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+﻿/* General */
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
 
+body {
+    margin-bottom: 80px;
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Navbar */
 a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white !important;
 }
 
+.navbar {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+    color: white !important;
+    margin-right: 10px;
+}
+
+    .nav-link:hover {
+        color: #dbeafe !important;
+    }
+
+/* Links */
 a {
-  color: #0077cc;
+    color: #0d6efd;
+    text-decoration: none;
 }
 
+    a:hover {
+        text-decoration: underline;
+    }
+
+/* Buttons */
 .btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .08);
 }
 
+.card-title {
+    font-weight: 600;
+}
+
+/* Borders */
 .border-top {
-  border-top: 1px solid #e5e5e5;
+    border-top: 1px solid #dee2e6;
 }
+
 .border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid #dee2e6;
 }
 
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
-}
-
+/* Footer */
 .footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    line-height: 60px;
+    background-color: white;
+    text-align: center;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background-color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 8px;
+}
+
+/* Forms */
+input, select, textarea {
+    border-radius: 6px !important;
+}
+
+.validation-summary-errors {
+    color: red;
+    font-weight: bold;
+}
+
+.field-validation-error {
+    color: red;
+    font-size: 0.9rem;
 }

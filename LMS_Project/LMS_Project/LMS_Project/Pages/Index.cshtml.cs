@@ -1,20 +1,33 @@
-using Microsoft.AspNetCore.Mvc;
+using LMS_Project.Data;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace LMS_Project.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        private readonly LmsContext _context;
 
-        public IndexModel(ILogger<IndexModel> logger)
+        public IndexModel(LmsContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
-        public void OnGet()
-        {
+        public int TotalCourses { get; set; }
+        public int TotalStudents { get; set; }
+        public int TotalAssignments { get; set; }
+        public int TotalEnrollments { get; set; }
 
+        public async Task OnGetAsync()
+        {
+            TotalCourses = await _context.Courses.CountAsync();
+
+            TotalStudents = await _context.Users
+                .CountAsync(u => u.Role == Models.Enums.UserRole.Student);
+
+            TotalAssignments = await _context.Assignments.CountAsync();
+
+            TotalEnrollments = await _context.StudentCourses.CountAsync();
         }
     }
 }

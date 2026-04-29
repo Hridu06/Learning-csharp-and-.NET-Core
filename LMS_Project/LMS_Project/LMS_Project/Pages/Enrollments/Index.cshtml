@@ -1,6 +1,30 @@
-﻿namespace LMS_Project.Pages.Enrollments
-{
-    public class Index
-    {
-    }
+﻿@page
+@model LMS_Project.Pages.Enrollments.IndexModel
+
+@{
+    ViewData["Title"] = "Enrollments";
 }
+
+<h2>Enrollments</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Enrollment Date</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Enrollments)
+        {
+            <tr>
+                <td>@item.Student?.Name</td>
+                <td>@item.Course?.Title</td>
+                <td>@item.EnrollmentDate.ToShortDateString()</td>
+                <td>@item.Grade</td>
+            </tr>
+        }
+    </tbody>
+</table>

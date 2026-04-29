@@ -1,10 +1,52 @@
 ﻿@page
-@model IndexModel
+@model LMS_Project.Pages.IndexModel
+
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold text-primary">Welcome to LMS</h1>
+    <p class="lead">Learning Management System for Students and Instructors</p>
+</div>
+
+<div class="row text-center">
+
+    <div class="col-md-3">
+        <div class="card p-4">
+            <h4>Total Courses</h4>
+            <h2>@Model.TotalCourses</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-4">
+            <h4>Total Students</h4>
+            <h2>@Model.TotalStudents</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-4">
+            <h4>Total Assignments</h4>
+            <h2>@Model.TotalAssignments</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card p-4">
+            <h4>Total Enrollments</h4>
+            <h2>@Model.TotalEnrollments</h2>
+        </div>
+    </div>
+
+</div>
+
+<div class="mt-5">
+    <h3 class="mb-3">Quick Navigation</h3>
+
+    <a asp-page="/Courses/Index" class="btn btn-primary me-2">Courses</a>
+    <a asp-page="/Assignments/Index" class="btn btn-success me-2">Assignments</a>
+    <a asp-page="/Enrollments/Index" class="btn btn-warning me-2">Enrollments</a>
+    <a asp-page="/Dashboard/Instructor" class="btn btn-info">Dashboard</a>
 </div>

@@ -1,6 +1,22 @@
-﻿namespace LMS_Project.Pages.Courses
-{
-    public class Index
-    {
-    }
+﻿@page
+@model LMS_Project.Pages.Courses.IndexModel
+
+@{
+    ViewData["Title"] = "Courses";
 }
+
+<h2>Courses</h2>
+
+<a asp-page="Create" class="btn btn-primary mb-3">Create New Course</a>
+
+<div class="row">
+    @foreach (var course in Model.Courses)
+    {
+        <div class="col-md-4">
+            @await Html.PartialAsync("_CourseCard", course)
+
+            <a asp-page="Edit" asp-route-id="@course.Id" class="btn btn-warning btn-sm">Edit</a>
+            <a asp-page="Details" asp-route-id="@course.Id" class="btn btn-info btn-sm">Details</a>
+        </div>
+    }
+</div>

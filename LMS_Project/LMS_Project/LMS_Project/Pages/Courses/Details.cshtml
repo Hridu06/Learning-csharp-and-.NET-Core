@@ -1,6 +1,15 @@
-﻿namespace LMS_Project.Pages.Courses
-{
-    public class Details
-    {
-    }
+﻿@page "{id:int}"
+@model LMS_Project.Pages.Courses.DetailsModel
+
+@{
+    ViewData["Title"] = "Course Details";
 }
+
+<h2>@Model.Course?.Title</h2>
+
+<p><strong>Description:</strong> @Model.Course?.Description</p>
+<p><strong>Credits:</strong> @Model.Course?.Credits</p>
+<p><strong>Instructor:</strong> @Model.Course?.Instructor?.Name</p>
+
+<a asp-page="Edit" asp-route-id="@Model.Course?.Id" class="btn btn-warning">Edit</a>
+<a asp-page="Index" class="btn btn-secondary">Back</a>

@@ -1,6 +1,46 @@
-﻿namespace LMS_Project.Pages.Assignments
-{
-    public class Create
-    {
-    }
+﻿@page
+@model LMS_Project.Pages.Assignments.CreateModel
+
+@{
+    ViewData["Title"] = "Create Assignment";
+}
+
+<h2>Create Assignment</h2>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Assignment.Title"></label>
+        <input asp-for="Assignment.Title" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Assignment.Description"></label>
+        <textarea asp-for="Assignment.Description" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Assignment.MaxPoints"></label>
+        <input asp-for="Assignment.MaxPoints" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Assignment.DueDate"></label>
+        <input asp-for="Assignment.DueDate" type="date" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Assignment.CourseId"></label>
+        <select asp-for="Assignment.CourseId" asp-items="Model.CourseList" class="form-control">
+            <option value="">-- Select Course --</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+    <a asp-page="Index" class="btn btn-secondary">Back</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

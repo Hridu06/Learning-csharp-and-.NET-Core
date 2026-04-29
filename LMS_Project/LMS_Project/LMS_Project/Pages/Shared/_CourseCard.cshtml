@@ -1,6 +1,14 @@
-﻿namespace LMS_Project.Pages.Shared
-{
-    public class _CourseCard
-    {
-    }
-}
+﻿@model LMS_Project.Models.Course
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Title</h5>
+        <p class="card-text">@Model.Description</p>
+        <p><strong>Credits:</strong> @Model.Credits</p>
+        <p><strong>Instructor:</strong> @Model.Instructor?.Name</p>
+
+        <a asp-page="/Courses/Details" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+            View Details
+        </a>
+    </div>
+</div>

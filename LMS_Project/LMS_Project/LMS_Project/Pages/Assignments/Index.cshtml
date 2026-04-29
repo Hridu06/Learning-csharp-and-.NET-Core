@@ -1,6 +1,32 @@
-﻿namespace LMS_Project.Pages.Assignments
-{
-    public class Index
-    {
-    }
+﻿@page
+@model LMS_Project.Pages.Assignments.IndexModel
+
+@{
+    ViewData["Title"] = "Assignments";
 }
+
+<h2>Assignments</h2>
+
+<a asp-page="Create" class="btn btn-primary mb-3">Create Assignment</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Course</th>
+            <th>Due Date</th>
+            <th>Max Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Assignments)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.Course?.Title</td>
+                <td>@item.DueDate.ToShortDateString()</td>
+                <td>@item.MaxPoints</td>
+            </tr>
+        }
+    </tbody>
+</table>

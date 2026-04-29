@@ -7,6 +7,8 @@
 
 <h2>Enrollments</h2>
 
+<a asp-page="Create" class="btn btn-primary mb-3">Enroll Student</a>
+
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
@@ -14,6 +16,7 @@
             <th>Course</th>
             <th>Enrollment Date</th>
             <th>Grade</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
@@ -23,7 +26,15 @@
                 <td>@item.Student?.Name</td>
                 <td>@item.Course?.Title</td>
                 <td>@item.EnrollmentDate.ToShortDateString()</td>
-                <td>@item.Grade</td>
+                <td>@(item.Grade.HasValue? item.Grade.Value.ToString() : "Pending")</td>
+                <td>
+                    <a asp-page="Delete"
+                       asp-route-studentId="@item.StudentId"
+                       asp-route-courseId="@item.CourseId"
+                       class="btn btn-danger btn-sm">
+                        Remove
+                    </a>
+                </td>
             </tr>
         }
     </tbody>

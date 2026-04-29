@@ -1,0 +1,19 @@
+﻿@page "{studentId:int}/{courseId:int}"
+@model LMS_Project.Pages.Enrollments.DeleteModel
+
+<h2>Remove Enrollment</h2>
+
+<h4 class="text-danger">Are you sure you want to remove this enrollment?</h4>
+
+<div class="card p-3 mt-3">
+    <p><strong>Student:</strong> @Model.StudentCourse.Student?.Name</p>
+    <p><strong>Course:</strong> @Model.StudentCourse.Course?.Title</p>
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="StudentCourse.StudentId" />
+    <input type="hidden" asp-for="StudentCourse.CourseId" />
+
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+</form>

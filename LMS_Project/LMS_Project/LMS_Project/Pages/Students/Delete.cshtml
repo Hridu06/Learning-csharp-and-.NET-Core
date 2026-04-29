@@ -1,0 +1,23 @@
+﻿@page "{id:int}"
+@model LMS_Project.Pages.Students.DeleteModel
+
+@{
+    ViewData["Title"] = "Delete Student";
+}
+
+<h2>Delete Student</h2>
+
+<h4 class="text-danger">Are you sure you want to delete this student?</h4>
+
+<div class="card p-3 mt-3">
+    <p><strong>ID:</strong> @Model.Student.Id</p>
+    <p><strong>Name:</strong> @Model.Student.Name</p>
+    <p><strong>Email:</strong> @Model.Student.Email</p>
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="Student.Id" />
+
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+</form>

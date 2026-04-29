@@ -1,0 +1,33 @@
+﻿@page
+@model LMS_Project.Pages.Enrollments.CreateModel
+
+@{
+    ViewData["Title"] = "Enroll Student";
+}
+
+<h2>Enroll Student</h2>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="StudentCourse.StudentId" class="form-label"></label>
+        <select asp-for="StudentCourse.StudentId" asp-items="Model.Students" class="form-control">
+            <option value="">Select Student</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StudentCourse.CourseId" class="form-label"></label>
+        <select asp-for="StudentCourse.CourseId" asp-items="Model.Courses" class="form-control">
+            <option value="">Select Course</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enroll</button>
+    <a asp-page="Index" class="btn btn-secondary">Back</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,55 @@
+﻿@page
+@model LMS_Project.Pages.Dashboard.StudentModel
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<h2>Student Dashboard</h2>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <h4>Enrolled Courses</h4>
+            <h2>@Model.EnrolledCoursesCount</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <h4>Completed Assignments</h4>
+            <h2>@Model.CompletedAssignmentsCount</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <h4>Grade Progress</h4>
+            <h2>@Model.GradeProgress%</h2>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+<h3 class="mt-4">My Courses</h3>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Course</th>
+            <th>Enrollment Date</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.EnrolledCourses)
+        {
+            <tr>
+                <td>@item.Course.Title</td>
+                <td>@item.EnrollmentDate.ToShortDateString()</td>
+                <td>@(item.Grade.HasValue? item.Grade.Value.ToString() : "Pending")</td>
+            </tr>
+        }
+    </tbody>
+</table>

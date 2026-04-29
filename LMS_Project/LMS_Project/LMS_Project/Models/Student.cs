@@ -1,4 +1,6 @@
-﻿namespace LMS_Project.Models
+﻿using LMS_Project.Models.Enums;
+
+namespace LMS_Project.Models
 {
     public class Student : User
     {

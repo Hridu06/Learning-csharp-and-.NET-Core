@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="text-center">
+    <h1>Library Management System</h1>
+
+    <p>Welcome to the Library Management System.</p>
+
+    <hr />
+
+    <p>
+        Use the navigation menu to manage
+        <strong>Books</strong> and
+        <strong>Authors</strong>.
+    </p>
+
+    <a asp-controller="Books" asp-action="Index" class="btn btn-primary">
+        View Books
+    </a>
+
+    <a asp-controller="Authors" asp-action="Index" class="btn btn-success">
+        View Authors
+    </a>
+</div>

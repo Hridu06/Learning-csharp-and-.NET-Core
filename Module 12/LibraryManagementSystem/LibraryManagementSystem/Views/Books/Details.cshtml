@@ -1,0 +1,110 @@
+﻿```cshtml
+@model LibraryManagementSystem.Models.Book
+
+<h3>Book Details</h3>
+
+<hr />
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        @Html.DisplayNameFor(model => model.Title)
+    </dt>
+    <dd class="col-sm-9">
+        @Html.DisplayFor(model => model.Title)
+    </dd>
+
+    <dt class="col-sm-3">
+        @Html.DisplayNameFor(model => model.ISBN)
+    </dt>
+    <dd class="col-sm-9">
+        @Html.DisplayFor(model => model.ISBN)
+    </dd>
+
+    <dt class="col-sm-3">
+        @Html.DisplayNameFor(model => model.PublicationYear)
+    </dt>
+    <dd class="col-sm-9">
+        @Html.DisplayFor(model => model.PublicationYear)
+    </dd>
+
+    <dt class="col-sm-3">
+        @Html.DisplayNameFor(model => model.TotalCopies)
+    </dt>
+    <dd class="col-sm-9">
+        @Html.DisplayFor(model => model.TotalCopies)
+    </dd>
+
+    <dt class="col-sm-3">
+        @Html.DisplayNameFor(model => model.AvailableCopies)
+    </dt>
+    <dd class="col-sm-9">
+        @Html.DisplayFor(model => model.AvailableCopies)
+    </dd>
+
+    <dt class="col-sm-3">
+        Author
+    </dt>
+    <dd class="col-sm-9">
+        @Model.Author.FirstName
+    </dd>
+
+</dl>
+
+<hr />
+
+<h4>Borrow Records</h4>
+
+@if (Model.BorrowRecords != null && Model.BorrowRecords.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Borrow Date</th>
+                <th>Due Date</th>
+                <th>Return Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model.BorrowRecords)
+            {
+                <tr>
+                    <td>@item.StudentName</td>
+                    <td>@item.BorrowDate.ToShortDateString()</td>
+                    <td>@item.DueDate.ToShortDateString()</td>
+                    <td>
+                        @(item.ReturnDate.HasValue
+                                        ? item.ReturnDate.Value.ToShortDateString()
+                                        : "Not returned")
+            </td>
+        </tr>
+                }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No borrow records found.</p>
+}
+
+<div class="mt-3">
+    <a asp-action="Borrow"
+       asp-route-bookId="@Model.Id"
+       class="btn btn-success">
+        Borrow Book
+    </a>
+
+    <a asp-action="Edit"
+       asp-route-id="@Model.Id"
+       class="btn btn-primary">
+        Edit
+    </a>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Back to List
+    </a>
+</div>
+```

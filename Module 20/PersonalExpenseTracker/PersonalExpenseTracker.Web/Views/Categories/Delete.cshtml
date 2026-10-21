@@ -1,0 +1,16 @@
+@model CategoryDto
+@{ ViewData["Title"] = "Delete category"; }
+<div class="form-page mx-auto">
+    <h1 class="h2">Delete category</h1>
+    <div class="alert alert-warning">This action is permanent. The category can only be deleted if no expenses are linked to it.</div>
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <dl class="row">
+            <dt class="col-sm-4">Name</dt><dd class="col-sm-8 text-break">@Model.Name</dd>
+            <dt class="col-sm-4">Description</dt><dd class="col-sm-8 text-break">@(Model.Description ?? "None")</dd>
+        </dl>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            <button class="btn btn-danger" type="submit">Delete category</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+        </form>
+    </div></div>
+</div>

@@ -1,0 +1,40 @@
+@model IReadOnlyList<ExpenseDto>
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">Title</th>
+                <th scope="col" class="text-end">Amount (BDT)</th>
+                <th scope="col">Date</th>
+                <th scope="col">Category</th>
+                <th scope="col">Receipt</th>
+                <th scope="col" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var expense in Model)
+        {
+            <tr>
+                <td class="fw-medium text-break">@expense.Title</td>
+                <td class="text-end text-nowrap">@expense.Amount.ToString("N2")</td>
+                <td class="text-nowrap">@expense.Date.ToString("dd MMM yyyy")</td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis">@expense.CategoryName</span></td>
+                <td>
+                    @if (expense.ReceiptFileName is not null)
+                    {
+                        <a asp-controller="Expenses" asp-action="Receipt" asp-route-id="@expense.Id" aria-label="View receipt for @expense.Title">View receipt</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">None</span>
+                    }
+                </td>
+                <td class="text-end text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Expenses" asp-action="Edit" asp-route-id="@expense.Id" aria-label="Edit @expense.Title">Edit</a>
+                    <a class="btn btn-sm btn-outline-danger" asp-controller="Expenses" asp-action="Delete" asp-route-id="@expense.Id" aria-label="Delete @expense.Title">Delete</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

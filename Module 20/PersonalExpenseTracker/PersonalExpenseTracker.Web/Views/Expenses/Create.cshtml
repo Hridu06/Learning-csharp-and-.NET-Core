@@ -1,0 +1,13 @@
+@model ExpenseFormViewModel
+@{ ViewData["Title"] = "Add expense"; }
+<div class="form-page mx-auto">
+    <a asp-action="Index" class="text-decoration-none small">&larr; Back to expenses</a>
+    <h1 class="h2 mt-3">Add expense</h1>
+    <p class="text-muted">Record your spending and attach a receipt if you have one. Fields marked * are required.</p>
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <partial name="_Form" model="Model" />
+        </form>
+    </div></div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

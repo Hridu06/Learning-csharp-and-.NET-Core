@@ -1,0 +1,20 @@
+@model ExpenseDto
+@{ ViewData["Title"] = "Delete expense"; }
+<div class="form-page mx-auto">
+    <h1 class="h2">Delete expense</h1>
+    <div class="alert alert-warning">This will permanently delete the expense and its attached receipt, if any.</div>
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <dl class="row">
+            <dt class="col-sm-4">Title</dt><dd class="col-sm-8 text-break">@Model.Title</dd>
+            <dt class="col-sm-4">Amount</dt><dd class="col-sm-8">BDT @Model.Amount.ToString("N2")</dd>
+            <dt class="col-sm-4">Date</dt><dd class="col-sm-8">@Model.Date.ToString("dd MMM yyyy")</dd>
+            <dt class="col-sm-4">Category</dt><dd class="col-sm-8">@Model.CategoryName</dd>
+            <dt class="col-sm-4">Notes</dt><dd class="col-sm-8 notes-text">@(Model.Notes ?? "None")</dd>
+            <dt class="col-sm-4">Receipt</dt><dd class="col-sm-8">@(Model.ReceiptFileName is null ? "None" : "Attached")</dd>
+        </dl>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            <button class="btn btn-danger" type="submit">Delete expense</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+        </form>
+    </div></div>
+</div>

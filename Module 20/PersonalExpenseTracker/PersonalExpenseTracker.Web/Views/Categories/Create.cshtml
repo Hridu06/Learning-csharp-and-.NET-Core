@@ -1,0 +1,11 @@
+@model CategoryFormViewModel
+@{ ViewData["Title"] = "Add category"; }
+<div class="form-page mx-auto">
+    <a asp-action="Index" class="text-decoration-none small">&larr; Back to categories</a>
+    <h1 class="h2 mt-3">Add category</h1>
+    <p class="text-muted">Give your expenses a home. Fields marked * are required.</p>
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <form asp-action="Create" method="post"><partial name="_Form" model="Model" /></form>
+    </div></div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

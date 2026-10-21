@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+.vs/
+.packages/
+.tools/
+TestResults/
+PersonalExpenseTracker.Web/wwwroot/uploads/receipts/*
+!PersonalExpenseTracker.Web/wwwroot/uploads/receipts/.gitkeep
+*.user
+*.suo
+*.log
+/README.md
+/docs/
+/.github/copilot-instructions.md

@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Keep dependency restore consistent in Visual Studio and the CLI. -->
+    <RestorePackagesPath>$(MSBuildThisFileDirectory).packages</RestorePackagesPath>
+  </PropertyGroup>
+</Project>

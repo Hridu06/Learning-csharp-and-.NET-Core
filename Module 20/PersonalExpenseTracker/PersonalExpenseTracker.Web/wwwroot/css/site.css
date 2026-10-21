@@ -1,0 +1,15 @@
+html { font-size: 16px; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+body > .container { flex: 1; }
+.form-page { max-width: 720px; }
+.card { border-radius: .6rem; overflow: hidden; }
+.table > :not(caption) > * > * { padding: .9rem 1rem; }
+.receipt-image { max-height: 75vh; object-fit: contain; }
+.notes-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.field-validation-error { font-size: .875rem; }
+.input-validation-error { border-color: var(--bs-danger); }
+.navbar-brand { white-space: normal; }
+@media (max-width: 575px) {
+  .navbar-brand { font-size: 1rem; }
+  .table > :not(caption) > * > * { padding: .75rem; }
+}

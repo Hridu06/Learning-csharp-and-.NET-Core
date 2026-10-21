@@ -1,0 +1,10 @@
+@model ExpenseDto
+@{ ViewData["Title"] = "Receipt"; }
+<a asp-action="Index" class="text-decoration-none small">&larr; Back to expenses</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-3">
+    <div><h1 class="h2 mb-1">Receipt</h1><p class="text-muted mb-0">@Model.Title &middot; BDT @Model.Amount.ToString("N2") &middot; @Model.Date.ToString("dd MMM yyyy")</p></div>
+    <a class="btn btn-outline-primary" href="@Url.Content("~/uploads/receipts/" + Model.ReceiptFileName)" target="_blank" rel="noopener">Open original image</a>
+</div>
+<div class="card shadow-sm"><div class="card-body text-center">
+    <img class="img-fluid receipt-image" src="@Url.Content("~/uploads/receipts/" + Model.ReceiptFileName)" alt="Uploaded receipt for @Model.Title" />
+</div></div>

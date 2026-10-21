@@ -1,0 +1,16 @@
+@model CategoryFormViewModel
+<input type="hidden" asp-for="Id" />
+<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+<div class="mb-3">
+    <label asp-for="Name" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
+    <input asp-for="Name" class="form-control" maxlength="100" placeholder="e.g. Healthcare" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="form-text">Choose a unique name. Names are compared without regard to letter case.</div>
+</div>
+<div class="mb-4">
+    <label asp-for="Description" class="form-label"></label> <span class="text-muted small">(optional)</span>
+    <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+<button class="btn btn-primary" type="submit">@(Model.Id == 0 ? "Save category" : "Save changes")</button>
+<a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>

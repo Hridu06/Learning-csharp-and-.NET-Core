@@ -1,0 +1,55 @@
+@model SummaryDto
+@{ ViewData["Title"] = "Summary"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div><h1 class="h2 mb-1">Your spending, at a glance</h1><p class="text-muted mb-0">Keep track of the everyday expenses that add up.</p></div>
+    <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create">+ Add expense</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card h-100 border-primary shadow-sm"><div class="card-body">
+        <h2 class="h6 text-muted">This month &middot; @Model.Month.ToString("MMMM yyyy")</h2>
+        <p class="h3 mb-0 text-primary">BDT @Model.CurrentMonthTotal.ToString("N2")</p>
+    </div></div></div>
+    <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
+        <h2 class="h6 text-muted">All-time spending</h2>
+        <p class="h3 mb-0">BDT @Model.Categories.Sum(c => c.Total).ToString("N2")</p>
+    </div></div></div>
+    <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
+        <h2 class="h6 text-muted">Expenses recorded</h2>
+        <p class="h3 mb-0">@Model.Categories.Sum(c => c.ExpenseCount)</p>
+    </div></div></div>
+</div>
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3"><h2 class="h5 mb-0">Spending by category <span class="text-muted fw-normal small">/ all time</span></h2></div>
+    @if (Model.Categories.Count == 0)
+    {
+        <div class="card-body text-muted">No categories yet. <a asp-controller="Categories" asp-action="Create">Add a category</a> to get started.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light"><tr><th scope="col">Category</th><th scope="col" class="text-end">Expenses</th><th scope="col" class="text-end">Total (BDT)</th></tr></thead>
+                <tbody>
+                @foreach (var category in Model.Categories)
+                {
+                    <tr><td>@category.Name</td><td class="text-end">@category.ExpenseCount</td><td class="text-end">@category.Total.ToString("N2")</td></tr>
+                }
+                </tbody>
+                <tfoot class="table-light"><tr><th scope="row">Total</th><td class="text-end fw-semibold">@Model.Categories.Sum(c => c.ExpenseCount)</td><td class="text-end fw-semibold">@Model.Categories.Sum(c => c.Total).ToString("N2")</td></tr></tfoot>
+            </table>
+        </div>
+    }
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h2 class="h5 mb-0">5 most recent expenses</h2><a asp-controller="Expenses" asp-action="Index" class="small">View all expenses &rarr;</a>
+    </div>
+    @if (Model.RecentExpenses.Count == 0)
+    {
+        <div class="card-body text-center py-5"><h3 class="h6">Your first expense starts here</h3><p class="text-muted mb-0">Use Add expense to start building your spending history.</p></div>
+    }
+    else
+    {
+        <partial name="_ExpenseTable" model="Model.RecentExpenses" />
+    }
+</div>

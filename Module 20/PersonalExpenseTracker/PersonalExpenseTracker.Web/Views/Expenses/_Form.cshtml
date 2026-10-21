@@ -1,0 +1,50 @@
+@model ExpenseFormViewModel
+<input type="hidden" asp-for="Id" />
+<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+<div class="mb-3">
+    <label asp-for="Title" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
+    <input asp-for="Title" class="form-control" maxlength="100" placeholder="e.g. Weekly groceries" />
+    <span asp-validation-for="Title" class="text-danger"></span>
+</div>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="Amount" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
+        <input asp-for="Amount" class="form-control" type="number" min="0.01" max="9999999999999999.99" step="0.01" placeholder="0.00" />
+        <span asp-validation-for="Amount" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Date" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
+        <input asp-for="Date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+        <span asp-validation-for="Date" class="text-danger"></span>
+    </div>
+</div>
+<div class="mb-3">
+    <label asp-for="CategoryId" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
+    <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+        <option value="">Select a category</option>
+    </select>
+    <span asp-validation-for="CategoryId" class="text-danger"></span>
+    @if (Model.Categories.Count == 0)
+    {
+        <div class="alert alert-warning mt-2">Add a category before saving an expense. <a asp-controller="Categories" asp-action="Create">Create a category</a>.</div>
+    }
+</div>
+<div class="mb-3">
+    <label asp-for="Notes" class="form-label"></label> <span class="text-muted small">(optional)</span>
+    <textarea asp-for="Notes" class="form-control" rows="3" maxlength="2000"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+<div class="mb-4">
+    <label asp-for="Receipt" class="form-label"></label> <span class="text-muted small">(optional)</span>
+    <input asp-for="Receipt" class="form-control" type="file" accept=".jpg,.png" aria-describedby="receiptHelp" />
+    <div id="receiptHelp" class="form-text">JPG or PNG only. Maximum 2 MB. @(Model.Id > 0 ? "Leave this empty to keep your existing receipt." : "")</div>
+    <span asp-validation-for="Receipt" class="text-danger"></span>
+    @if (Model.ExistingReceiptFileName is not null)
+    {
+        <div class="mt-2"><a asp-action="Receipt" asp-route-id="@Model.Id" target="_blank" rel="noopener">View current receipt <span class="small">(opens a new tab)</span></a></div>
+    }
+</div>
+<div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary" disabled="@(Model.Categories.Count == 0)">@(Model.Id == 0 ? "Save expense" : "Save changes")</button>
+    <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+</div>

@@ -1,0 +1,46 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+<div class="auth-card">
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="text-body-secondary mb-4">Sign in to continue to your dashboard.</p>
+
+    <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" role="alert"></div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <div class="input-icon">
+                <i class="bi bi-envelope" aria-hidden="true"></i>
+                <input asp-for="Email" class="form-control" autocomplete="email" placeholder="you@example.com" autofocus />
+            </div>
+            <span asp-validation-for="Email"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <div class="input-icon input-group">
+                <i class="bi bi-lock" aria-hidden="true"></i>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Your password" />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle aria-label="Show password">
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+            </div>
+            <span asp-validation-for="Password"></span>
+        </div>
+
+        <div class="form-check mb-4">
+            <input asp-for="RememberMe" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label"></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 btn-lg-auth" data-loading-text="Signing in…">
+            Sign in <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+        </button>
+    </form>
+
+    <p class="auth-switch">New here? <a asp-action="Register">Create an account</a></p>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -51,7 +51,7 @@
     @if (Model.ExistingReceiptFileName is not null)
     {
         <div class="current-receipt mb-2">
-            <img src="@Url.Content("~/uploads/receipts/" + Model.ExistingReceiptFileName)" alt="Current receipt" />
+            <img src="@Url.Action("ReceiptImage", new { id = Model.Id })" alt="Current receipt" />
             <div class="flex-grow-1">
                 <div class="fw-medium">Current receipt</div>
                 <div class="small text-body-secondary">Upload a new image to replace it, or leave empty to keep it.</div>

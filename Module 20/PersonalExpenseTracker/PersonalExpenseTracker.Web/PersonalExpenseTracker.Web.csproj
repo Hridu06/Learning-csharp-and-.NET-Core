@@ -1,5 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><UserSecretsId>b88ba783-d32f-4286-ad27-7d019c623910</UserSecretsId>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../PersonalExpenseTracker.Service/PersonalExpenseTracker.Service.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10"><PrivateAssets>all</PrivateAssets><IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets></PackageReference>

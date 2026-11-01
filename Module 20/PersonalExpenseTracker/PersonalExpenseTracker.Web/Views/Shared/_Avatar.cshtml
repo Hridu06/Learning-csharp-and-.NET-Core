@@ -1,0 +1,10 @@
+@model AvatarViewModel
+@* The picture endpoint only serves the signed-in user's own avatar; everyone else is shown with initials. *@
+@if (Model.AvatarFile is not null)
+{
+    <img class="user-avatar user-avatar-@Model.Size" src="@Url.Action("Avatar", "Profile", new { v = Model.AvatarFile })" alt="" />
+}
+else
+{
+    <span class="user-avatar user-avatar-@Model.Size" aria-hidden="true">@Initials(Model.Name)</span>
+}

@@ -10,4 +10,6 @@ public class Expense
     public string? ReceiptFileName { get; set; }
     public int CategoryId { get; set; }
     public ExpenseCategory Category { get; set; } = null!;
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser User { get; set; } = null!;
 }

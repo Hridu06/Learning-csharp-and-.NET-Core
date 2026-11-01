@@ -12,6 +12,18 @@ public static partial class UiHelpers
 
     public static string ShortDate(DateTime date) => date.ToString("dd MMM yyyy");
 
+    // "Sabbir Hossain Hridoy" -> "SH"
+    public static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length switch
+        {
+            0 => "?",
+            1 => parts[0][..1].ToUpperInvariant(),
+            _ => $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+        };
+    }
+
     public static IHtmlContent CategoryBadge(this IHtmlHelper html, string name, string color, string icon)
     {
         var badge = new TagBuilder("span");

@@ -1,0 +1,61 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_AuthLayout";
+}
+<div class="auth-card">
+    <h1 class="auth-title">Create your account</h1>
+    <p class="text-body-secondary mb-4">Start tracking your spending in under a minute.</p>
+
+    <form asp-action="Register" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" role="alert"></div>
+
+        <div class="mb-3">
+            <label asp-for="FullName" class="form-label"></label>
+            <div class="input-icon">
+                <i class="bi bi-person" aria-hidden="true"></i>
+                <input asp-for="FullName" class="form-control" autocomplete="name" placeholder="Your name" maxlength="100" autofocus />
+            </div>
+            <span asp-validation-for="FullName"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <div class="input-icon">
+                <i class="bi bi-envelope" aria-hidden="true"></i>
+                <input asp-for="Email" class="form-control" autocomplete="email" placeholder="you@example.com" />
+            </div>
+            <span asp-validation-for="Email"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <div class="input-icon input-group">
+                <i class="bi bi-lock" aria-hidden="true"></i>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="Create a password"
+                       aria-describedby="passwordRules" data-password-rules="#passwordRules" />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle aria-label="Show password">
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+            </div>
+            <span asp-validation-for="Password"></span>
+            <partial name="_PasswordRules" />
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="ConfirmPassword" class="form-label"></label>
+            <div class="input-icon">
+                <i class="bi bi-lock" aria-hidden="true"></i>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Repeat your password" />
+            </div>
+            <span asp-validation-for="ConfirmPassword"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 btn-lg-auth" data-loading-text="Creating account…">
+            Create account <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+        </button>
+    </form>
+
+    <p class="auth-switch">Already have an account? <a asp-action="Login">Sign in</a></p>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

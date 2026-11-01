@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PersonalExpenseTracker.Web.Models;
 
 namespace PersonalExpenseTracker.Web.Controllers;
 
+// Error and status pages must render for signed-out visitors too.
+[AllowAnonymous]
 public class HomeController : Controller
 {
     public IActionResult Index() => RedirectToAction("Index", "Summary");

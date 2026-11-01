@@ -4,8 +4,9 @@ using PersonalExpenseTracker.Service.Models;
 
 namespace PersonalExpenseTracker.Service.Services;
 
-// This service owns receipt validation and disk operations; MVC never saves files.
-public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStorage> logger) : IReceiptStorage
+// This service owns image validation and disk operations; MVC never saves files.
+// Files live outside wwwroot and are only served through authorized controller actions.
+public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStorage> logger, string label = "receipt") : IReceiptStorage
 {
     public const int MaxBytes = 2 * 1024 * 1024;
 
@@ -14,9 +15,9 @@ public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStor
         var extension = Path.GetExtension(upload.FileName);
         if (!extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
             && !extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
-            throw new ReceiptValidationException("Only JPG and PNG receipt images are allowed.");
+            throw new ReceiptValidationException($"Only JPG and PNG {label} images are allowed.");
         if (upload.Length <= 0 || upload.Length > MaxBytes)
-            throw new ReceiptValidationException("The receipt must be a non-empty image no larger than 2 MB.");
+            throw new ReceiptValidationException($"The {label} must be a non-empty image no larger than 2 MB.");
 
         // Count actual bytes too: metadata alone is not a reliable size limit.
         using var buffer = new MemoryStream();
@@ -25,7 +26,7 @@ public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStor
         while ((read = await upload.Content.ReadAsync(chunk, ct)) != 0)
         {
             if (buffer.Length + read > MaxBytes)
-                throw new ReceiptValidationException("The receipt must be no larger than 2 MB.");
+                throw new ReceiptValidationException($"The {label} must be no larger than 2 MB.");
             await buffer.WriteAsync(chunk.AsMemory(0, read), ct);
         }
 
@@ -34,7 +35,7 @@ public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStor
         var isJpg = bytes.AsSpan().StartsWith(new byte[] { 255, 216, 255 });
         if ((extension.Equals(".png", StringComparison.OrdinalIgnoreCase) && !isPng)
             || (extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) && !isJpg))
-            throw new ReceiptValidationException("The receipt content must match its JPG or PNG extension.");
+            throw new ReceiptValidationException($"The {label} content must match its JPG or PNG extension.");
 
         Directory.CreateDirectory(receiptDirectory);
         var fileName = $"{Guid.NewGuid():N}{extension}";
@@ -56,10 +57,7 @@ public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStor
     {
         if (string.IsNullOrWhiteSpace(fileName)) return true;
         // Only application-generated filenames can ever be removed.
-        if (Path.GetFileName(fileName) != fileName
-            || !Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _)
-            || !(Path.GetExtension(fileName).Equals(".jpg", StringComparison.OrdinalIgnoreCase)
-                || Path.GetExtension(fileName).Equals(".png", StringComparison.OrdinalIgnoreCase)))
+        if (!IsGeneratedName(fileName))
         {
             logger.LogWarning("Refused to delete an invalid receipt filename.");
             return false;
@@ -75,4 +73,23 @@ public class FileReceiptStorage(string receiptDirectory, ILogger<FileReceiptStor
             return false;
         }
     }
+
+    public StoredFile? Find(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) || !IsGeneratedName(fileName)) return null;
+        var path = Path.Combine(receiptDirectory, fileName);
+        if (!File.Exists(path)) return null;
+        var contentType = Path.GetExtension(fileName).Equals(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+        return new StoredFile(path, contentType);
+    }
+
+    // Generated names are "<guid:N>.jpg" or "<guid:N>.png", which rules out path traversal.
+    private static bool IsGeneratedName(string fileName) =>
+        Path.GetFileName(fileName) == fileName
+        && Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _)
+        && (Path.GetExtension(fileName).Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+            || Path.GetExtension(fileName).Equals(".png", StringComparison.OrdinalIgnoreCase));
 }
+
+public class FileAvatarStorage(string directory, ILogger<FileReceiptStorage> logger)
+    : FileReceiptStorage(directory, logger, "profile picture"), IAvatarStorage;

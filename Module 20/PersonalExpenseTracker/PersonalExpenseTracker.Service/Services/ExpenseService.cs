@@ -9,11 +9,8 @@ using PersonalExpenseTracker.Service.Models;
 namespace PersonalExpenseTracker.Service.Services;
 
 public class ExpenseService(IExpenseRepository expenses, ICategoryRepository categories,
-    IReceiptStorage receipts, ILogger<ExpenseService> logger) : IExpenseService
+    IReceiptStorage receipts, ICurrentUser currentUser, ILogger<ExpenseService> logger) : IExpenseService
 {
-    public async Task<IReadOnlyList<ExpenseDto>> GetAllAsync(CancellationToken ct = default) =>
-        (await expenses.GetAllAsync(ct)).Select(Map).ToList();
-
     public async Task<PagedResult<ExpenseDto>> SearchAsync(ExpenseSearch search, CancellationToken ct = default)
     {
         var sort = search.Sort?.ToLowerInvariant() switch
@@ -24,14 +21,14 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
             _ => ExpenseSortField.Date
         };
         var pageSize = Math.Clamp(search.PageSize, 5, 100);
-        var page = await expenses.SearchAsync(new ExpenseFilter(search.Search, search.CategoryId, search.From, search.To,
+        var page = await expenses.SearchAsync(UserId, new ExpenseFilter(search.Search, search.CategoryId, search.From, search.To,
             search.MinAmount, search.MaxAmount, sort, search.Descending, search.Page, pageSize), ct);
         return new PagedResult<ExpenseDto>(page.Items.Select(Map).ToList(), page.TotalCount, page.TotalAmount, page.Page, pageSize);
     }
 
     public async Task<ExpenseDto?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        var expense = await expenses.GetByIdAsync(id, ct);
+        var expense = await expenses.GetByIdAsync(UserId, id, ct);
         return expense is null ? null : Map(expense);
     }
 
@@ -45,7 +42,7 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
             if (receipt is not null) savedFile = await receipts.SaveAsync(receipt, ct);
             await expenses.AddAsync(new Expense
             {
-                Title = input.Title.Trim(), Amount = input.Amount, Date = input.Date.Date,
+                UserId = UserId, Title = input.Title.Trim(), Amount = input.Amount, Date = input.Date.Date,
                 CategoryId = input.CategoryId, Notes = Clean(input.Notes), ReceiptFileName = savedFile
             }, ct);
             return OperationResult.Success();
@@ -71,7 +68,7 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
 
     public async Task<OperationResult> UpdateAsync(int id, ExpenseInput input, ReceiptUpload? receipt, CancellationToken ct = default)
     {
-        var expense = await expenses.GetByIdAsync(id, ct);
+        var expense = await expenses.GetByIdAsync(UserId, id, ct);
         if (expense is null) return OperationResult.Missing();
         var validation = await ValidateAsync(input, ct);
         if (validation is not null) return validation;
@@ -114,7 +111,7 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
 
     public async Task<OperationResult> DeleteAsync(int id, CancellationToken ct = default)
     {
-        var expense = await expenses.GetByIdAsync(id, ct);
+        var expense = await expenses.GetByIdAsync(UserId, id, ct);
         if (expense is null) return OperationResult.Missing();
         await expenses.DeleteAsync(expense, ct);
         var cleaned = receipts.Delete(expense.ReceiptFileName);
@@ -133,7 +130,7 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
             return OperationResult.Fail("Please choose a valid date.", "Date");
         if (input.Notes?.Length > 2000)
             return OperationResult.Fail("Notes cannot exceed 2000 characters.", "Notes");
-        if (!await categories.ExistsAsync(input.CategoryId, ct))
+        if (!await categories.ExistsAsync(UserId, input.CategoryId, ct))
             return OperationResult.Fail("Please select an existing category.", "CategoryId");
         return null;
     }
@@ -141,6 +138,15 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
     public static ExpenseDto Map(Expense e) =>
         new(e.Id, e.Title, e.Amount, e.Date, e.Notes, e.ReceiptFileName, e.CategoryId,
             e.Category.Name, e.Category.Color, e.Category.Icon);
+
+    // Only the owner can load their receipt, because GetByIdAsync is scoped to the current user.
+    public async Task<StoredFile?> GetReceiptAsync(int id, CancellationToken ct = default)
+    {
+        var expense = await expenses.GetByIdAsync(UserId, id, ct);
+        return expense is null ? null : receipts.Find(expense.ReceiptFileName);
+    }
+
+    private string UserId => currentUser.UserId;
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

@@ -1,7 +1,7 @@
 @model ExpenseDto
 @{
     ViewData["Title"] = "Receipt";
-    var imageUrl = Url.Content("~/uploads/receipts/" + Model.ReceiptFileName);
+    var imageUrl = Url.Action("ReceiptImage", new { id = Model.Id });
 }
 <div class="page-header">
     <div>

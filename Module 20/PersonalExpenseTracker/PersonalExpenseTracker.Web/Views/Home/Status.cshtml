@@ -9,6 +9,8 @@
         _ => ("Something went wrong", "We couldn't complete that request. Please try again.", "exclamation-octagon")
     };
     ViewData["Title"] = title;
+    // Signed-out visitors get the simple layout without the app navigation.
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
 }
 <div class="status-page">
     <div class="status-icon"><i class="bi bi-@icon" aria-hidden="true"></i></div>

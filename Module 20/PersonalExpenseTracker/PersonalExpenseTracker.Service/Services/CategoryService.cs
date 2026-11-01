@@ -7,17 +7,17 @@ using PersonalExpenseTracker.Service.Models;
 
 namespace PersonalExpenseTracker.Service.Services;
 
-public partial class CategoryService(ICategoryRepository categories) : ICategoryService
+public partial class CategoryService(ICategoryRepository categories, ICurrentUser currentUser) : ICategoryService
 {
     private const string LinkedMessage = "This category has linked expenses. Move or delete those expenses before deleting the category.";
 
     public async Task<IReadOnlyList<CategoryDto>> GetAllAsync(CancellationToken ct = default) =>
-        (await categories.GetAllWithTotalsAsync(ct))
+        (await categories.GetAllWithTotalsAsync(UserId, ct))
         .Select(c => new CategoryDto(c.Id, c.Name, c.Description, c.Color, c.Icon, c.ExpenseCount, c.Total)).ToList();
 
     public async Task<CategoryDto?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        var category = await categories.GetByIdAsync(id, ct);
+        var category = await categories.GetByIdAsync(UserId, id, ct);
         return category is null ? null : new CategoryDto(category.Id, category.Name, category.Description, category.Color, category.Icon, 0, 0);
     }
 
@@ -29,7 +29,7 @@ public partial class CategoryService(ICategoryRepository categories) : ICategory
         {
             await categories.AddAsync(new ExpenseCategory
             {
-                Name = input.Name.Trim(), Description = Clean(input.Description),
+                UserId = UserId, Name = input.Name.Trim(), Description = Clean(input.Description),
                 Color = input.Color.ToUpperInvariant(), Icon = input.Icon
             }, ct);
             return OperationResult.Success();
@@ -42,7 +42,7 @@ public partial class CategoryService(ICategoryRepository categories) : ICategory
 
     public async Task<OperationResult> UpdateAsync(int id, CategoryInput input, CancellationToken ct = default)
     {
-        var category = await categories.GetByIdAsync(id, ct);
+        var category = await categories.GetByIdAsync(UserId, id, ct);
         if (category is null) return OperationResult.Missing();
         var validation = await ValidateAsync(input, id, ct);
         if (validation is not null) return validation;
@@ -63,7 +63,7 @@ public partial class CategoryService(ICategoryRepository categories) : ICategory
 
     public async Task<OperationResult> DeleteAsync(int id, CancellationToken ct = default)
     {
-        var category = await categories.GetByIdAsync(id, ct);
+        var category = await categories.GetByIdAsync(UserId, id, ct);
         if (category is null) return OperationResult.Missing();
         if (await categories.HasExpensesAsync(id, ct)) return OperationResult.Fail(LinkedMessage);
         try
@@ -87,10 +87,12 @@ public partial class CategoryService(ICategoryRepository categories) : ICategory
             return OperationResult.Fail("Choose a valid colour.", "Color");
         if (!CategoryAppearance.Icons.Contains(input.Icon))
             return OperationResult.Fail("Choose one of the available icons.", "Icon");
-        if (await categories.NameExistsAsync(input.Name.Trim(), id, ct))
+        if (await categories.NameExistsAsync(UserId, input.Name.Trim(), id, ct))
             return OperationResult.Fail("A category with this name already exists.", "Name");
         return null;
     }
+
+    private string UserId => currentUser.UserId;
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

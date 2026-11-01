@@ -99,6 +99,15 @@ public class ExpensesController(IExpenseService expenses, ICategoryService categ
         return View(expense);
     }
 
+    // Receipts are stored outside wwwroot; the service only returns files owned by the current user.
+    public async Task<IActionResult> ReceiptImage(int id, CancellationToken ct)
+    {
+        var file = await expenses.GetReceiptAsync(id, ct);
+        if (file is null) return NotFound();
+        Response.Headers.CacheControl = "private, max-age=3600";
+        return PhysicalFile(file.Path, file.ContentType);
+    }
+
     private async Task LoadCategoriesAsync(ExpenseFormViewModel model, CancellationToken ct)
     {
         model.Categories = (await categories.GetAllAsync(ct))

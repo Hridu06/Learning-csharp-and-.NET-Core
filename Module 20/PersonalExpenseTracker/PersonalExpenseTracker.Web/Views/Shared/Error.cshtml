@@ -1,5 +1,8 @@
 @model ErrorViewModel
-@{ ViewData["Title"] = "Something went wrong"; }
+@{
+    ViewData["Title"] = "Something went wrong";
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
+}
 <div class="status-page">
     <div class="status-icon status-icon-danger"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i></div>
     <p class="status-code">500</p>

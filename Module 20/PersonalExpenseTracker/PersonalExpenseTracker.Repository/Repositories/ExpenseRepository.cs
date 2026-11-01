@@ -8,13 +8,9 @@ namespace PersonalExpenseTracker.Repository.Repositories;
 
 public class ExpenseRepository(ExpenseTrackerDbContext context) : RepositoryBase(context), IExpenseRepository
 {
-    public async Task<IReadOnlyList<Expense>> GetAllAsync(CancellationToken ct = default) =>
-        await Context.Expenses.AsNoTracking().Include(e => e.Category)
-            .OrderByDescending(e => e.Date).ThenByDescending(e => e.Id).ToListAsync(ct);
-
-    public async Task<ExpensePage> SearchAsync(ExpenseFilter filter, CancellationToken ct = default)
+    public async Task<ExpensePage> SearchAsync(string userId, ExpenseFilter filter, CancellationToken ct = default)
     {
-        var query = Context.Expenses.AsNoTracking();
+        var query = Context.Expenses.AsNoTracking().Where(e => e.UserId == userId);
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var term = filter.Search.Trim();
@@ -48,21 +44,21 @@ public class ExpenseRepository(ExpenseTrackerDbContext context) : RepositoryBase
         return new ExpensePage(items, totalCount, totalAmount, page);
     }
 
-    public async Task<IReadOnlyList<MonthlyTotal>> GetMonthlyTotalsAsync(DateTime from, DateTime until, CancellationToken ct = default) =>
-        await Context.Expenses.Where(e => e.Date >= from && e.Date < until)
+    public async Task<IReadOnlyList<MonthlyTotal>> GetMonthlyTotalsAsync(string userId, DateTime from, DateTime until, CancellationToken ct = default) =>
+        await Context.Expenses.Where(e => e.UserId == userId && e.Date >= from && e.Date < until)
             .GroupBy(e => new { e.Date.Year, e.Date.Month })
             .Select(g => new MonthlyTotal(g.Key.Year, g.Key.Month, g.Sum(e => e.Amount)))
             .ToListAsync(ct);
 
-    public Task<Expense?> GetByIdAsync(int id, CancellationToken ct = default) =>
-        Context.Expenses.AsNoTracking().Include(e => e.Category).FirstOrDefaultAsync(e => e.Id == id, ct);
+    public Task<Expense?> GetByIdAsync(string userId, int id, CancellationToken ct = default) =>
+        Context.Expenses.AsNoTracking().Include(e => e.Category).FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId, ct);
 
-    public async Task<IReadOnlyList<Expense>> GetRecentAsync(int count, CancellationToken ct = default) =>
-        await Context.Expenses.AsNoTracking().Include(e => e.Category)
+    public async Task<IReadOnlyList<Expense>> GetRecentAsync(string userId, int count, CancellationToken ct = default) =>
+        await Context.Expenses.AsNoTracking().Include(e => e.Category).Where(e => e.UserId == userId)
             .OrderByDescending(e => e.Date).ThenByDescending(e => e.Id).Take(count).ToListAsync(ct);
 
-    public async Task<decimal> GetTotalAsync(DateTime from, DateTime until, CancellationToken ct = default) =>
-        await Context.Expenses.Where(e => e.Date >= from && e.Date < until)
+    public async Task<decimal> GetTotalAsync(string userId, DateTime from, DateTime until, CancellationToken ct = default) =>
+        await Context.Expenses.Where(e => e.UserId == userId && e.Date >= from && e.Date < until)
             .SumAsync(e => (decimal?)e.Amount, ct) ?? 0m;
 
     public async Task AddAsync(Expense expense, CancellationToken ct = default)

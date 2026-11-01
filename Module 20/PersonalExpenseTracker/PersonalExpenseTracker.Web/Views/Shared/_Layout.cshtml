@@ -6,6 +6,11 @@
         (Controller: "Expenses", Label: "Expenses", Icon: "receipt"),
         (Controller: "Categories", Label: "Categories", Icon: "tags")
     };
+    var fullName = User.FindFirstValue(AppClaims.FullName) ?? User.Identity?.Name ?? "Account";
+    var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+    var avatar = new AvatarViewModel(fullName, User.FindFirstValue(AppClaims.Avatar), "md");
+    var smallAvatar = avatar with { Size = "sm" };
+    var isAdmin = User.IsInRole(AppRoles.Admin);
 }
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
@@ -58,17 +63,48 @@
                         <i class="bi bi-@item.Icon" aria-hidden="true"></i><span>@item.Label</span>
                     </a>
                 }
+
+                <div class="sidebar-label mt-3">Account</div>
+                <a class="sidebar-link @(controller == "Profile" ? "active" : "")" aria-current="@(controller == "Profile" ? "page" : null)"
+                   asp-controller="Profile" asp-action="Index">
+                    <i class="bi bi-person-circle" aria-hidden="true"></i><span>My profile</span>
+                </a>
+                @if (isAdmin)
+                {
+                    <a class="sidebar-link @(controller == "Admin" ? "active" : "")" aria-current="@(controller == "Admin" ? "page" : null)"
+                       asp-controller="Admin" asp-action="Index">
+                        <i class="bi bi-shield-lock" aria-hidden="true"></i><span>User management</span>
+                    </a>
+                }
             </nav>
 
             <div class="sidebar-footer">
-                <a class="btn btn-primary w-100" asp-controller="Expenses" asp-action="Create">
-                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense
-                </a>
-                <button type="button" class="sidebar-link w-100 mt-2" data-theme-toggle>
+                <button type="button" class="sidebar-link w-100" data-theme-toggle>
                     <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
                     <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
                     <span class="theme-icon-light">Dark mode</span><span class="theme-icon-dark">Light mode</span>
                 </button>
+
+                <div class="dropup mt-3">
+                    <button class="user-card" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu for @fullName">
+                        <partial name="_Avatar" model="avatar" />
+                        <span class="user-card-text">
+                            <span class="user-card-name">@fullName</span>
+                            <span class="user-card-email">@email</span>
+                        </span>
+                        <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu w-100">
+                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index"><i class="bi bi-person me-2" aria-hidden="true"></i>My profile</a></li>
+                        <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-fragment="password"><i class="bi bi-key me-2" aria-hidden="true"></i>Change password</a></li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li>
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Sign out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </aside>
@@ -83,10 +119,13 @@
                 <img src="~/favicon.svg" width="28" height="28" alt="" />
                 <span>Expense<strong>Tracker</strong></span>
             </a>
-            <button type="button" class="btn btn-icon" data-theme-toggle aria-label="Toggle dark mode">
-                <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
-                <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
-            </button>
+            <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-icon" data-theme-toggle aria-label="Toggle dark mode">
+                    <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
+                    <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
+                </button>
+                <a asp-controller="Profile" asp-action="Index" aria-label="My profile"><partial name="_Avatar" model="smallAvatar" /></a>
+            </div>
         </header>
 
         <main id="main-content" class="app-content">

@@ -1,0 +1,160 @@
+@model AdminDashboardDto
+@{ ViewData["Title"] = "User management"; }
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">User management</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">User management</h1>
+        <p class="page-subtitle">Manage accounts and administrator access.</p>
+    </div>
+</div>
+
+<div class="privacy-note mb-4">
+    <i class="bi bi-incognito" aria-hidden="true"></i>
+    <div><strong>Privacy first.</strong> Administrators manage accounts only. Each user's expenses, categories and receipts stay private to them; only counts are shown here.</div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100"><div class="card-body">
+            <div class="stat-head"><span class="stat-label">Total users</span><span class="stat-icon stat-icon-primary"><i class="bi bi-people" aria-hidden="true"></i></span></div>
+            <div class="stat-value">@Model.TotalUsers</div>
+            <div class="stat-foot text-body-secondary">@Model.LockedCount locked</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100"><div class="card-body">
+            <div class="stat-head"><span class="stat-label">New this month</span><span class="stat-icon stat-icon-success"><i class="bi bi-person-plus" aria-hidden="true"></i></span></div>
+            <div class="stat-value">@Model.NewUsersThisMonth</div>
+            <div class="stat-foot text-body-secondary">Registered since the 1st</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100"><div class="card-body">
+            <div class="stat-head"><span class="stat-label">Administrators</span><span class="stat-icon stat-icon-warning"><i class="bi bi-shield-check" aria-hidden="true"></i></span></div>
+            <div class="stat-value">@Model.AdminCount</div>
+            <div class="stat-foot text-body-secondary">With full access</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100"><div class="card-body">
+            <div class="stat-head"><span class="stat-label">Expenses recorded</span><span class="stat-icon stat-icon-info"><i class="bi bi-receipt" aria-hidden="true"></i></span></div>
+            <div class="stat-value">@Model.TotalExpenses</div>
+            <div class="stat-foot text-body-secondary">Across all users</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header card-header-split">
+        <div>
+            <h2 class="card-title">All users</h2>
+            <p class="card-subtitle">Newest first</p>
+        </div>
+        <span class="count-badge">@Model.TotalUsers</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover app-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Joined</th>
+                    <th scope="col" class="text-end">Expenses</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var user in Model.Users)
+            {
+                var name = string.IsNullOrWhiteSpace(user.FullName) ? user.Email ?? "Unnamed" : user.FullName;
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="user-avatar user-avatar-md" aria-hidden="true">@Initials(name)</span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold text-truncate">
+                                    @name
+                                    @if (user.IsCurrentUser) { <span class="you-badge">You</span> }
+                                </div>
+                                <div class="small text-body-secondary text-truncate">@(user.Email ?? "No email set")</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (user.IsAdmin)
+                        {
+                            <span class="role-badge role-badge-admin"><i class="bi bi-shield-check" aria-hidden="true"></i> Admin</span>
+                        }
+                        else
+                        {
+                            <span class="role-badge"><i class="bi bi-person" aria-hidden="true"></i> User</span>
+                        }
+                    </td>
+                    <td class="text-nowrap text-body-secondary">@ShortDate(user.CreatedAt.ToLocalTime())</td>
+                    <td class="text-end fw-semibold">@user.ExpenseCount</td>
+                    <td>
+                        @if (user.IsLocked)
+                        {
+                            <span class="status-pill status-pill-locked"><i class="bi bi-lock-fill" aria-hidden="true"></i> Locked</span>
+                        }
+                        else
+                        {
+                            <span class="status-pill status-pill-active"><i class="bi bi-circle-fill" aria-hidden="true"></i> Active</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (user.IsCurrentUser)
+                        {
+                            <span class="small text-body-tertiary" data-bs-title="You can't change your own role or lock yourself">&mdash;</span>
+                        }
+                        else
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions for @name">
+                                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form method="post" asp-action="@(user.IsAdmin ? "RemoveAdmin" : "MakeAdmin")" asp-route-id="@user.Id">
+                                            <button type="submit" class="dropdown-item">
+                                                @if (user.IsAdmin)
+                                                {
+                                                    <i class="bi bi-shield-x me-2" aria-hidden="true"></i>@:Remove admin
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-shield-plus me-2" aria-hidden="true"></i>@:Make admin
+                                                }
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form method="post" asp-action="@(user.IsLocked ? "Unlock" : "Lock")" asp-route-id="@user.Id">
+                                            @if (user.IsLocked)
+                                            {
+                                                <button type="submit" class="dropdown-item"><i class="bi bi-unlock me-2" aria-hidden="true"></i>Unlock account</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-lock me-2" aria-hidden="true"></i>Lock account</button>
+                                            }
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

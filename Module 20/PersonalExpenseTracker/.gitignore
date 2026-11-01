@@ -4,11 +4,11 @@
 .packages/
 .tools/
 TestResults/
-PersonalExpenseTracker.Web/wwwroot/uploads/receipts/*
-!PersonalExpenseTracker.Web/wwwroot/uploads/receipts/.gitkeep
 *.user
 *.suo
 *.log
 /README.md
 /docs/
 /.github/copilot-instructions.md
+# Private uploads (receipts, profile pictures) served only through authorized actions
+PersonalExpenseTracker.Web/App_Data/

@@ -1,10 +1,46 @@
 @model ExpenseDto
-@{ ViewData["Title"] = "Receipt"; }
-<a asp-action="Index" class="text-decoration-none small">&larr; Back to expenses</a>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-3">
-    <div><h1 class="h2 mb-1">Receipt</h1><p class="text-muted mb-0">@Model.Title &middot; BDT @Model.Amount.ToString("N2") &middot; @Model.Date.ToString("dd MMM yyyy")</p></div>
-    <a class="btn btn-outline-primary" href="@Url.Content("~/uploads/receipts/" + Model.ReceiptFileName)" target="_blank" rel="noopener">Open original image</a>
+@{
+    ViewData["Title"] = "Receipt";
+    var imageUrl = Url.Content("~/uploads/receipts/" + Model.ReceiptFileName);
+}
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Expenses</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Receipt</li>
+            </ol>
+        </nav>
+        <h1 class="page-title text-break">@Model.Title</h1>
+        <p class="page-subtitle">Receipt attached to this expense.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i> Edit</a>
+        <a class="btn btn-primary" href="@imageUrl" target="_blank" rel="noopener">
+            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> Open original<span class="visually-hidden"> (opens a new tab)</span>
+        </a>
+    </div>
 </div>
-<div class="card shadow-sm"><div class="card-body text-center">
-    <img class="img-fluid receipt-image" src="@Url.Content("~/uploads/receipts/" + Model.ReceiptFileName)" alt="Uploaded receipt for @Model.Title" />
-</div></div>
+<div class="row g-4">
+    <div class="col-lg-4 order-lg-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-body-secondary small">Amount</div>
+                <div class="fs-3 fw-bold mb-3">@Money(Model.Amount)</div>
+                <dl class="detail-list mb-0">
+                    <dt>Date</dt><dd>@ShortDate(Model.Date)</dd>
+                    <dt>Category</dt><dd>@Html.CategoryBadge(Model.CategoryName, Model.CategoryColor, Model.CategoryIcon)</dd>
+                    <dt>Notes</dt><dd class="notes-text">@(Model.Notes ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 order-lg-1">
+        <div class="card">
+            <div class="card-body text-center receipt-frame">
+                <img class="img-fluid receipt-image" src="@imageUrl" alt="Uploaded receipt for @Model.Title" />
+            </div>
+        </div>
+    </div>
+</div>

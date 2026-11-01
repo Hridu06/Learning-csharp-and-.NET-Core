@@ -1,13 +1,25 @@
 @model ExpenseFormViewModel
 @{ ViewData["Title"] = "Add expense"; }
-<div class="form-page mx-auto">
-    <a asp-action="Index" class="text-decoration-none small">&larr; Back to expenses</a>
-    <h1 class="h2 mt-3">Add expense</h1>
-    <p class="text-muted">Record your spending and attach a receipt if you have one. Fields marked * are required.</p>
-    <div class="card shadow-sm"><div class="card-body p-4">
-        <form asp-action="Create" method="post" enctype="multipart/form-data">
-            <partial name="_Form" model="Model" />
-        </form>
-    </div></div>
+<div class="form-page">
+    <div class="page-header">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Expenses</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">Add expense</h1>
+            <p class="page-subtitle">Record your spending and attach a receipt if you have one.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <partial name="_Form" model="Model" />
+            </form>
+        </div>
+    </div>
 </div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

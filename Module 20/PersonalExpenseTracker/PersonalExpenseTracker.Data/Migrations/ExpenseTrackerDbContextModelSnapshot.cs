@@ -70,9 +70,19 @@ namespace PersonalExpenseTracker.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -91,25 +101,33 @@ namespace PersonalExpenseTracker.Data.Migrations
                         new
                         {
                             Id = 1,
+                            Color = "#F97316",
                             Description = "Groceries, meals and dining out",
+                            Icon = "basket",
                             Name = "Food"
                         },
                         new
                         {
                             Id = 2,
+                            Color = "#0EA5E9",
                             Description = "Public transport, fuel and travel",
+                            Icon = "bus-front",
                             Name = "Transport"
                         },
                         new
                         {
                             Id = 3,
+                            Color = "#EAB308",
                             Description = "Electricity, water, internet and other bills",
+                            Icon = "lightning-charge",
                             Name = "Utilities"
                         },
                         new
                         {
                             Id = 4,
+                            Color = "#A855F7",
                             Description = "Movies, hobbies and leisure",
+                            Icon = "film",
                             Name = "Entertainment"
                         });
                 });

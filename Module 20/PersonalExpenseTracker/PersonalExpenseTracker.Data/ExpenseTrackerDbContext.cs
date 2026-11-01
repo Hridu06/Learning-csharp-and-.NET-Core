@@ -14,12 +14,14 @@ public class ExpenseTrackerDbContext(DbContextOptions<ExpenseTrackerDbContext> o
         category.Property(c => c.Name).HasMaxLength(100).IsRequired()
             .UseCollation("SQL_Latin1_General_CP1_CI_AS");
         category.Property(c => c.Description).HasMaxLength(500);
+        category.Property(c => c.Color).HasMaxLength(7).IsRequired();
+        category.Property(c => c.Icon).HasMaxLength(50).IsRequired();
         category.HasIndex(c => c.Name).IsUnique();
         category.HasData(
-            new ExpenseCategory { Id = 1, Name = "Food", Description = "Groceries, meals and dining out" },
-            new ExpenseCategory { Id = 2, Name = "Transport", Description = "Public transport, fuel and travel" },
-            new ExpenseCategory { Id = 3, Name = "Utilities", Description = "Electricity, water, internet and other bills" },
-            new ExpenseCategory { Id = 4, Name = "Entertainment", Description = "Movies, hobbies and leisure" });
+            new ExpenseCategory { Id = 1, Name = "Food", Description = "Groceries, meals and dining out", Color = "#F97316", Icon = "basket" },
+            new ExpenseCategory { Id = 2, Name = "Transport", Description = "Public transport, fuel and travel", Color = "#0EA5E9", Icon = "bus-front" },
+            new ExpenseCategory { Id = 3, Name = "Utilities", Description = "Electricity, water, internet and other bills", Color = "#EAB308", Icon = "lightning-charge" },
+            new ExpenseCategory { Id = 4, Name = "Entertainment", Description = "Movies, hobbies and leisure", Color = "#A855F7", Icon = "film" });
 
         var expense = modelBuilder.Entity<Expense>();
         expense.Property(e => e.Title).HasMaxLength(100).IsRequired();

@@ -1,8 +1,16 @@
 @model ErrorViewModel
 @{ ViewData["Title"] = "Something went wrong"; }
-<div class="alert alert-danger">
-    <h1 class="h4">We couldn't complete that request.</h1>
-    <p>Please try again or return to your summary.</p>
-    @if (Model.ShowRequestId) { <p class="small mb-0">Request ID: <code>@Model.RequestId</code></p> }
+<div class="status-page">
+    <div class="status-icon status-icon-danger"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i></div>
+    <p class="status-code">500</p>
+    <h1 class="h3 fw-bold">Something went wrong</h1>
+    <p class="text-body-secondary">We couldn't complete that request. Please try again in a moment.</p>
+    @if (Model.ShowRequestId)
+    {
+        <p class="small text-body-secondary">Request ID: <code>@Model.RequestId</code></p>
+    }
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+        <button type="button" class="btn btn-outline-secondary" data-history-back><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Go back</button>
+        <a class="btn btn-primary" asp-controller="Summary" asp-action="Index"><i class="bi bi-house me-1" aria-hidden="true"></i> Back to dashboard</a>
+    </div>
 </div>
-<a class="btn btn-primary" asp-controller="Summary" asp-action="Index">Back to summary</a>

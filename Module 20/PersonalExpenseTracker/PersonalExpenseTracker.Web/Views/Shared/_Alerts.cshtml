@@ -1,10 +1,25 @@
-@foreach (var (key, style) in new[] { ("Success", "success"), ("Error", "danger"), ("Warning", "warning") })
+@* TempData messages become toasts; site.js shows them on load and they hide themselves. *@
+<div class="toast-container position-fixed top-0 end-0 p-3">
+@foreach (var (key, style, icon, delay) in new[]
+{
+    ("Success", "success", "check-circle-fill", 4000),
+    ("Error", "danger", "x-circle-fill", 8000),
+    ("Warning", "warning", "exclamation-triangle-fill", 8000)
+})
 {
     if (TempData[key] is string message)
     {
-        <div class="alert alert-@style alert-dismissible fade show" role="alert">
-            @message
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss message"></button>
+        <div class="toast app-toast app-toast-@style" role="@(style == "success" ? "status" : "alert")"
+             aria-live="@(style == "success" ? "polite" : "assertive")" aria-atomic="true" data-bs-delay="@delay">
+            <div class="d-flex align-items-start gap-3 p-3">
+                <i class="bi bi-@icon toast-icon" aria-hidden="true"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">@key</div>
+                    <div class="small text-body-secondary">@message</div>
+                </div>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="toast" aria-label="Dismiss message"></button>
+            </div>
         </div>
     }
 }
+</div>

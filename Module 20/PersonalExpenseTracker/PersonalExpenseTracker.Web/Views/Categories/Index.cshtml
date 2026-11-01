@@ -1,39 +1,96 @@
 @model IReadOnlyList<CategoryDto>
-@{ ViewData["Title"] = "Categories"; }
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div><h1 class="h2 mb-1">Categories</h1><p class="text-muted mb-0">Organize your expenses into groups that make sense to you.</p></div>
-    <a class="btn btn-primary" asp-action="Create">+ Add category</a>
+@{
+    ViewData["Title"] = "Categories";
+    var grandTotal = Model.Sum(c => c.Total);
+}
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Categories</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">Categories</h1>
+        <p class="page-subtitle">Organize your expenses into groups that make sense to you.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add category</a>
+    </div>
 </div>
-<div class="card shadow-sm">
+
 @if (Model.Count == 0)
 {
-    <div class="card-body text-center py-5">
-        <h2 class="h5">No categories yet</h2>
-        <p class="text-muted">Create a category before adding an expense.</p>
-        <a class="btn btn-primary" asp-action="Create">Add your first category</a>
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-tags" aria-hidden="true"></i></div>
+            <h2 class="h5">No categories yet</h2>
+            <p class="text-body-secondary">Create a category before adding an expense.</p>
+            <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add your first category</a>
+        </div>
     </div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light"><tr><th scope="col">Name</th><th scope="col">Description</th><th scope="col" class="text-end">Expenses</th><th scope="col" class="text-end">Actions</th></tr></thead>
-            <tbody>
-            @foreach (var category in Model)
-            {
-                <tr>
-                    <td class="fw-semibold text-break">@category.Name</td>
-                    <td class="text-muted text-break">@(category.Description ?? "No description")</td>
-                    <td class="text-end">@category.ExpenseCount</td>
-                    <td class="text-end text-nowrap">
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@category.Id" aria-label="Edit @category.Name">Edit</a>
-                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@category.Id" aria-label="Delete @category.Name">Delete</a>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+    <div class="row g-3">
+    @foreach (var category in Model)
+    {
+        var share = grandTotal == 0 ? 0 : (double)(category.Total / grandTotal * 100);
+        <div class="col-sm-6 col-xl-4">
+            <div class="card category-card h-100" style="--cat:@category.Color">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        @Html.CategoryAvatar(category.Color, category.Icon)
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="h6 fw-semibold mb-1 text-truncate">@category.Name</h2>
+                            <p class="small text-body-secondary mb-0 line-clamp-2">@(category.Description ?? "No description")</p>
+                        </div>
+                        <div class="d-flex flex-shrink-0">
+                            <a class="btn btn-icon btn-sm" asp-action="Edit" asp-route-id="@category.Id"
+                               data-bs-title="Edit" aria-label="Edit @category.Name">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                            </a>
+                            @if (category.ExpenseCount > 0)
+                            {
+                                @* Disabled buttons don't fire events, so the tooltip sits on a wrapper. *@
+                                <span class="d-inline-block" tabindex="0" data-bs-title="Has linked expenses, so it can't be deleted">
+                                    <button type="button" class="btn btn-icon btn-sm" disabled aria-label="Delete @category.Name (unavailable)">
+                                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                                    </button>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-icon btn-icon-danger btn-sm" data-bs-title="Delete" aria-label="Delete @category.Name"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-delete-url="@Url.Action("Delete", "Categories", new { id = category.Id })"
+                                        data-delete-name="@category.Name" data-delete-message="This category will be permanently removed.">
+                                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <div>
+                                <div class="stat-caption">Total spent</div>
+                                <div class="fw-bold fs-5">@Money(category.Total)</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="stat-caption">Expenses</div>
+                                <div class="fw-semibold">@category.ExpenseCount</div>
+                            </div>
+                        </div>
+                        <div class="progress progress-thin" role="progressbar" aria-label="Share of all spending"
+                             aria-valuenow="@Math.Round(share)" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width:@share.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+                        <div class="small text-body-secondary mt-1">@share.ToString("0.#")% of all spending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
     </div>
+    <p class="text-body-secondary small mt-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Categories with linked expenses cannot be deleted.</p>
 }
-</div>
-<p class="text-muted small mt-3">Categories with linked expenses cannot be deleted.</p>

@@ -1,44 +1,107 @@
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var navItems = new[]
+    {
+        (Controller: "Summary", Label: "Dashboard", Icon: "grid-1x2"),
+        (Controller: "Expenses", Label: "Expenses", Icon: "receipt"),
+        (Controller: "Categories", Label: "Categories", Icon: "tags")
+    };
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Track your personal expenses, organize categories and keep receipts in one place." />
-    <title>@ViewData["Title"] - Personal Expense Tracker</title>
+    <title>@ViewData["Title"] · Expense Tracker</title>
+    @* Apply the saved theme before the page paints to avoid a light/dark flash. *@
+    <script>
+        (function () {
+            var theme;
+            try { theme = localStorage.getItem('theme'); } catch (e) { }
+            if (theme !== 'light' && theme !== 'dark') {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="~/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="bg-light">
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom mb-4">
-            <div class="container">
-                <a class="navbar-brand fw-bold" asp-controller="Summary" asp-action="Index">Personal Expense Tracker</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse justify-content-end" id="mainNav">
-                    <ul class="navbar-nav gap-sm-2">
-                        <li class="nav-item"><a class="nav-link @(controller == "Expenses" ? "active fw-semibold" : "")" aria-current="@(controller == "Expenses" ? "page" : null)" asp-controller="Expenses" asp-action="Index">Expenses</a></li>
-                        <li class="nav-item"><a class="nav-link @(controller == "Categories" ? "active fw-semibold" : "")" aria-current="@(controller == "Categories" ? "page" : null)" asp-controller="Categories" asp-action="Index">Categories</a></li>
-                        <li class="nav-item"><a class="nav-link @(controller == "Summary" ? "active fw-semibold" : "")" aria-current="@(controller == "Summary" ? "page" : null)" asp-controller="Summary" asp-action="Index">Summary</a></li>
-                    </ul>
-                </div>
+<body>
+    <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
+
+    <aside class="app-sidebar offcanvas-lg offcanvas-start" id="sidebar" tabindex="-1" aria-label="Main navigation">
+        <div class="sidebar-inner">
+            <div class="sidebar-brand">
+                <a class="brand" asp-controller="Summary" asp-action="Index">
+                    <img src="~/favicon.svg" width="36" height="36" alt="" />
+                    <span>Expense<strong>Tracker</strong></span>
+                </a>
+                <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
+                        data-bs-target="#sidebar" aria-label="Close menu"></button>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-5">
-            <partial name="_Alerts" />
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-label">Menu</div>
+                @foreach (var item in navItems)
+                {
+                    var active = controller == item.Controller;
+                    <a class="sidebar-link @(active ? "active" : "")" aria-current="@(active ? "page" : null)"
+                       asp-controller="@item.Controller" asp-action="Index">
+                        <i class="bi bi-@item.Icon" aria-hidden="true"></i><span>@item.Label</span>
+                    </a>
+                }
+            </nav>
+
+            <div class="sidebar-footer">
+                <a class="btn btn-primary w-100" asp-controller="Expenses" asp-action="Create">
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense
+                </a>
+                <button type="button" class="sidebar-link w-100 mt-2" data-theme-toggle>
+                    <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
+                    <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
+                    <span class="theme-icon-light">Dark mode</span><span class="theme-icon-dark">Light mode</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="app-main">
+        <header class="app-topbar d-lg-none">
+            <button class="btn btn-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+                    aria-controls="sidebar" aria-label="Open menu">
+                <i class="bi bi-list fs-4" aria-hidden="true"></i>
+            </button>
+            <a class="brand" asp-controller="Summary" asp-action="Index">
+                <img src="~/favicon.svg" width="28" height="28" alt="" />
+                <span>Expense<strong>Tracker</strong></span>
+            </a>
+            <button type="button" class="btn btn-icon" data-theme-toggle aria-label="Toggle dark mode">
+                <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
+                <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <main id="main-content" class="app-content">
             @RenderBody()
         </main>
+
+        <footer class="app-footer">
+            <span>&copy; @DateTime.Now.Year Personal Expense Tracker</span>
+            <span>All amounts in BDT (৳)</span>
+        </footer>
     </div>
-    <footer class="border-top bg-white py-3 mt-auto">
-        <div class="container text-muted small">Personal Expense Tracker &middot; All amounts in BDT</div>
-    </footer>
+
+    <partial name="_Alerts" />
+    <partial name="_DeleteModal" />
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

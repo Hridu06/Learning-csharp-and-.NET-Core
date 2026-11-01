@@ -1,24 +1,166 @@
-@model IReadOnlyList<ExpenseDto>
-@{ ViewData["Title"] = "Expenses"; }
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div><h1 class="h2 mb-1">Expenses</h1><p class="text-muted mb-0">A clear record of where your money goes.</p></div>
-    <a class="btn btn-primary" asp-action="Create">+ Add expense</a>
-</div>
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex flex-wrap justify-content-between gap-2 py-3">
-        <span class="fw-semibold">All expenses <span class="badge text-bg-light ms-1">@Model.Count</span></span>
-        <span class="text-muted">Total: <strong class="text-dark">BDT @Model.Sum(e => e.Amount).ToString("N2")</strong></span>
-    </div>
-    @if (Model.Count == 0)
+@model ExpenseIndexViewModel
+@{
+    ViewData["Title"] = "Expenses";
+    var query = Model.Query;
+    var result = Model.Result;
+    var firstItem = result.TotalCount == 0 ? 0 : (result.Page - 1) * result.PageSize + 1;
+    var lastItem = firstItem == 0 ? 0 : firstItem + result.Items.Count - 1;
+
+    // Page numbers to show: first, last and two either side of the current page; null marks a gap.
+    var pages = new List<int?>();
+    for (var p = 1; p <= result.TotalPages; p++)
     {
-        <div class="card-body text-center py-5">
-            <h2 class="h5">No expenses yet</h2>
-            <p class="text-muted">Add your first expense to start tracking your spending.</p>
-            <a class="btn btn-primary" asp-action="Create">Add your first expense</a>
+        if (p == 1 || p == result.TotalPages || Math.Abs(p - result.Page) <= 2) pages.Add(p);
+        else if (pages.LastOrDefault() is not null) pages.Add(null);
+    }
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Expenses</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">Expenses</h1>
+        <p class="page-subtitle">A clear record of where your money goes.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
+    </div>
+</div>
+
+<form class="card filter-card mb-4" method="get" asp-action="Index" role="search" aria-label="Filter expenses">
+    <input type="hidden" name="sort" value="@query.SortKey" />
+    <input type="hidden" name="dir" value="@(query.Descending ? "desc" : "asc")" />
+    <div class="card-body">
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-lg">
+                <label class="visually-hidden" for="filter-q">Search</label>
+                <div class="input-icon">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="filter-q" name="q" value="@query.Q" class="form-control" type="search" placeholder="Search title or notes…" maxlength="100" />
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <label class="visually-hidden" for="filter-category">Category</label>
+                <select id="filter-category" name="categoryId" class="form-select">
+                    <option value="">All categories</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id" selected="@(query.CategoryId == category.Id)">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-auto d-flex gap-2">
+                <button class="btn btn-outline-secondary flex-fill" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters"
+                        aria-expanded="@(query.HasAdvancedFilters ? "true" : "false")" aria-controls="advancedFilters">
+                    <i class="bi bi-sliders me-1" aria-hidden="true"></i> More
+                </button>
+                <button class="btn btn-primary flex-fill" type="submit"><i class="bi bi-funnel me-1" aria-hidden="true"></i> Apply</button>
+            </div>
+        </div>
+        <div class="collapse @(query.HasAdvancedFilters ? "show" : "")" id="advancedFilters">
+            <div class="row g-3 pt-3">
+                <div class="col-6 col-lg-3">
+                    <label class="form-label small" for="filter-from">From date</label>
+                    <input id="filter-from" name="from" type="date" class="form-control" value="@query.From?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label class="form-label small" for="filter-to">To date</label>
+                    <input id="filter-to" name="to" type="date" class="form-control" value="@query.To?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label class="form-label small" for="filter-min">Min amount</label>
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input id="filter-min" name="min" type="number" min="0" step="0.01" class="form-control" placeholder="0.00"
+                               value="@query.Min?.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label class="form-label small" for="filter-max">Max amount</label>
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input id="filter-max" name="max" type="number" min="0" step="0.01" class="form-control" placeholder="Any"
+                               value="@query.Max?.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header card-header-split">
+        <div>
+            <span class="fw-semibold">@(query.HasFilters ? "Filtered results" : "All expenses")</span>
+            <span class="count-badge ms-1">@result.TotalCount</span>
+            @if (query.HasFilters)
+            {
+                <a class="small ms-2" asp-action="Index"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Clear filters</a>
+            }
+        </div>
+        <div class="text-body-secondary small">Total <strong class="text-body fs-6 ms-1">@Money(result.TotalAmount)</strong></div>
+    </div>
+
+    @if (result.TotalCount == 0)
+    {
+        <div class="empty-state">
+            @if (query.HasFilters)
+            {
+                <div class="empty-icon"><i class="bi bi-search" aria-hidden="true"></i></div>
+                <h2 class="h5">No matching expenses</h2>
+                <p class="text-body-secondary">Try a different search term or widen the date and amount range.</p>
+                <a class="btn btn-outline-secondary" asp-action="Index">Clear filters</a>
+            }
+            else
+            {
+                <div class="empty-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
+                <h2 class="h5">No expenses yet</h2>
+                <p class="text-body-secondary">Add your first expense to start tracking your spending.</p>
+                <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add your first expense</a>
+            }
         </div>
     }
     else
     {
-        <partial name="_ExpenseTable" model="Model" />
+        <partial name="_ExpenseTable" model="new ExpenseTableViewModel(result.Items, query)" />
+
+        <div class="card-footer card-header-split">
+            <span class="small text-body-secondary">Showing <strong>@firstItem–@lastItem</strong> of <strong>@result.TotalCount</strong></span>
+            @if (result.TotalPages > 1)
+            {
+                <nav aria-label="Expense pages">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(result.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: result.Page - 1)" aria-label="Previous page">
+                                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        @foreach (var p in pages)
+                        {
+                            if (p is null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == result.Page ? "active" : "")">
+                                    <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: p)"
+                                       aria-current="@(p == result.Page ? "page" : null)">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(result.Page == result.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: result.Page + 1)" aria-label="Next page">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
     }
 </div>

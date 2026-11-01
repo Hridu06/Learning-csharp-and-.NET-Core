@@ -26,6 +26,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+app.UseStatusCodePagesWithReExecute("/Home/Status/{0}");
 // Runtime uploads are created after build, so they must use static-file middleware.
 app.UseStaticFiles(new StaticFileOptions
 {

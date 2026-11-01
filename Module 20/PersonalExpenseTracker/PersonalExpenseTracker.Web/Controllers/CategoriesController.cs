@@ -16,7 +16,7 @@ public class CategoriesController(ICategoryService categories) : Controller
     public async Task<IActionResult> Create(CategoryFormViewModel model, CancellationToken ct)
     {
         if (!ModelState.IsValid) { TempData["Error"] = "Please correct the highlighted errors."; return View(model); }
-        var result = await categories.CreateAsync(new CategoryInput(model.Name, model.Description), ct);
+        var result = await categories.CreateAsync(ToInput(model), ct);
         if (!result.Succeeded)
         {
             TempData["Error"] = "The category could not be saved. Please correct the highlighted errors.";
@@ -32,7 +32,8 @@ public class CategoriesController(ICategoryService categories) : Controller
         var category = await categories.GetByIdAsync(id, ct);
         return category is null ? NotFound() : View(new CategoryFormViewModel
         {
-            Id = category.Id, Name = category.Name, Description = category.Description
+            Id = category.Id, Name = category.Name, Description = category.Description,
+            Color = category.Color, Icon = category.Icon
         });
     }
 
@@ -41,7 +42,7 @@ public class CategoriesController(ICategoryService categories) : Controller
     {
         if (id != model.Id) return BadRequest();
         if (!ModelState.IsValid) { TempData["Error"] = "Please correct the highlighted errors."; return View(model); }
-        var result = await categories.UpdateAsync(id, new CategoryInput(model.Name, model.Description), ct);
+        var result = await categories.UpdateAsync(id, ToInput(model), ct);
         if (result.NotFound) return NotFound();
         if (!result.Succeeded)
         {
@@ -53,19 +54,17 @@ public class CategoriesController(ICategoryService categories) : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Delete(int id, CancellationToken ct)
-    {
-        var category = await categories.GetByIdAsync(id, ct);
-        return category is null ? NotFound() : View(category);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken ct)
+    // Confirmation happens in the shared delete modal.
+    [HttpPost]
+    public async Task<IActionResult> Delete(int id, string? returnUrl, CancellationToken ct)
     {
         var result = await categories.DeleteAsync(id, ct);
         if (result.NotFound) return NotFound();
         TempData[result.Succeeded ? "Success" : "Error"] =
             result.Succeeded ? "Category deleted successfully." : result.Error;
-        return RedirectToAction(nameof(Index));
+        return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
     }
+
+    private static CategoryInput ToInput(CategoryFormViewModel model) =>
+        new(model.Name, model.Description, model.Color, model.Icon);
 }

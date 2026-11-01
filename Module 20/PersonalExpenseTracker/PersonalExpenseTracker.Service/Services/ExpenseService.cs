@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PersonalExpenseTracker.Data.Entities;
 using PersonalExpenseTracker.Repository;
 using PersonalExpenseTracker.Repository.Interfaces;
+using PersonalExpenseTracker.Repository.Models;
 using PersonalExpenseTracker.Service.Interfaces;
 using PersonalExpenseTracker.Service.Models;
 
@@ -12,6 +13,21 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
 {
     public async Task<IReadOnlyList<ExpenseDto>> GetAllAsync(CancellationToken ct = default) =>
         (await expenses.GetAllAsync(ct)).Select(Map).ToList();
+
+    public async Task<PagedResult<ExpenseDto>> SearchAsync(ExpenseSearch search, CancellationToken ct = default)
+    {
+        var sort = search.Sort?.ToLowerInvariant() switch
+        {
+            "title" => ExpenseSortField.Title,
+            "amount" => ExpenseSortField.Amount,
+            "category" => ExpenseSortField.Category,
+            _ => ExpenseSortField.Date
+        };
+        var pageSize = Math.Clamp(search.PageSize, 5, 100);
+        var page = await expenses.SearchAsync(new ExpenseFilter(search.Search, search.CategoryId, search.From, search.To,
+            search.MinAmount, search.MaxAmount, sort, search.Descending, search.Page, pageSize), ct);
+        return new PagedResult<ExpenseDto>(page.Items.Select(Map).ToList(), page.TotalCount, page.TotalAmount, page.Page, pageSize);
+    }
 
     public async Task<ExpenseDto?> GetByIdAsync(int id, CancellationToken ct = default)
     {
@@ -123,7 +139,8 @@ public class ExpenseService(IExpenseRepository expenses, ICategoryRepository cat
     }
 
     public static ExpenseDto Map(Expense e) =>
-        new(e.Id, e.Title, e.Amount, e.Date, e.Notes, e.ReceiptFileName, e.CategoryId, e.Category.Name);
+        new(e.Id, e.Title, e.Amount, e.Date, e.Notes, e.ReceiptFileName, e.CategoryId,
+            e.Category.Name, e.Category.Color, e.Category.Icon);
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

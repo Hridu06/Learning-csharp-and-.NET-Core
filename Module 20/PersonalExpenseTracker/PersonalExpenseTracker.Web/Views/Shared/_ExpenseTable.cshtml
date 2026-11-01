@@ -1,40 +1,122 @@
-@model IReadOnlyList<ExpenseDto>
-<div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+@model ExpenseTableViewModel
+@{
+    var query = Model.Query;
+    const string deleteMessage = "This permanently removes the expense and its attached receipt.";
+
+    async Task SortHeader(string key, string label, string? css = null)
+    {
+        if (query is null)
+        {
+            <th scope="col" class="@css">@label</th>
+            return;
+        }
+        var active = query.SortKey == key;
+        var nextDescending = active ? !query.Descending : ExpenseListQuery.DefaultDescending(key);
+        var icon = !active ? "chevron-expand" : query.Descending ? "arrow-down" : "arrow-up";
+        <th scope="col" class="@css" aria-sort="@(active ? (query.Descending ? "descending" : "ascending") : "none")">
+            <a class="sort-link @(active ? "active" : "")" asp-action="Index"
+               asp-all-route-data="query.RouteData(key, nextDescending, 1)">
+                @label <i class="bi bi-@icon" aria-hidden="true"></i>
+            </a>
+        </th>
+    }
+}
+
+@* Desktop and tablet: table *@
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-hover app-table align-middle mb-0">
+        <thead>
             <tr>
-                <th scope="col">Title</th>
-                <th scope="col" class="text-end">Amount (BDT)</th>
-                <th scope="col">Date</th>
-                <th scope="col">Category</th>
-                <th scope="col">Receipt</th>
-                <th scope="col" class="text-end">Actions</th>
+                @{ await SortHeader("title", "Expense"); }
+                @{ await SortHeader("category", "Category"); }
+                @{ await SortHeader("date", "Date"); }
+                <th scope="col" class="text-center">Receipt</th>
+                @{ await SortHeader("amount", "Amount", "text-end"); }
+                <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
             </tr>
         </thead>
         <tbody>
-        @foreach (var expense in Model)
+        @foreach (var expense in Model.Items)
         {
             <tr>
-                <td class="fw-medium text-break">@expense.Title</td>
-                <td class="text-end text-nowrap">@expense.Amount.ToString("N2")</td>
-                <td class="text-nowrap">@expense.Date.ToString("dd MMM yyyy")</td>
-                <td><span class="badge bg-secondary-subtle text-secondary-emphasis">@expense.CategoryName</span></td>
-                <td>
+                <td class="text-break">
+                    <div class="fw-semibold">@expense.Title</div>
+                    @if (expense.Notes is not null)
+                    {
+                        <div class="small text-body-secondary text-truncate expense-notes">@expense.Notes</div>
+                    }
+                </td>
+                <td>@Html.CategoryBadge(expense.CategoryName, expense.CategoryColor, expense.CategoryIcon)</td>
+                <td class="text-nowrap text-body-secondary">@ShortDate(expense.Date)</td>
+                <td class="text-center">
                     @if (expense.ReceiptFileName is not null)
                     {
-                        <a asp-controller="Expenses" asp-action="Receipt" asp-route-id="@expense.Id" aria-label="View receipt for @expense.Title">View receipt</a>
+                        <a class="btn btn-icon btn-sm" asp-controller="Expenses" asp-action="Receipt" asp-route-id="@expense.Id"
+                           data-bs-title="View receipt" aria-label="View receipt for @expense.Title">
+                            <i class="bi bi-image" aria-hidden="true"></i>
+                        </a>
                     }
                     else
                     {
-                        <span class="text-muted">None</span>
+                        <span class="text-body-tertiary" aria-label="No receipt">&mdash;</span>
                     }
                 </td>
+                <td class="text-end text-nowrap fw-semibold amount">@Money(expense.Amount)</td>
                 <td class="text-end text-nowrap">
-                    <a class="btn btn-sm btn-outline-primary" asp-controller="Expenses" asp-action="Edit" asp-route-id="@expense.Id" aria-label="Edit @expense.Title">Edit</a>
-                    <a class="btn btn-sm btn-outline-danger" asp-controller="Expenses" asp-action="Delete" asp-route-id="@expense.Id" aria-label="Delete @expense.Title">Delete</a>
+                    <a class="btn btn-icon btn-sm" asp-controller="Expenses" asp-action="Edit" asp-route-id="@expense.Id"
+                       data-bs-title="Edit" aria-label="Edit @expense.Title">
+                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    </a>
+                    <button type="button" class="btn btn-icon btn-icon-danger btn-sm" data-bs-title="Delete" aria-label="Delete @expense.Title"
+                            data-bs-toggle="modal" data-bs-target="#deleteModal"
+                            data-delete-url="@Url.Action("Delete", "Expenses", new { id = expense.Id })"
+                            data-delete-name="@expense.Title" data-delete-message="@deleteMessage">
+                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
                 </td>
             </tr>
         }
         </tbody>
     </table>
 </div>
+
+@* Phones: stacked cards *@
+<ul class="expense-list list-unstyled mb-0 d-md-none">
+@foreach (var expense in Model.Items)
+{
+    <li class="expense-item">
+        @Html.CategoryAvatar(expense.CategoryColor, expense.CategoryIcon)
+        <div class="flex-grow-1 min-w-0">
+            <div class="fw-semibold text-truncate">@expense.Title</div>
+            <div class="small text-body-secondary text-truncate">
+                @expense.CategoryName &middot; @ShortDate(expense.Date)
+                @if (expense.ReceiptFileName is not null) { <i class="bi bi-paperclip" aria-label="Has receipt"></i> }
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="fw-semibold text-nowrap amount">@Money(expense.Amount)</div>
+            <div class="dropdown">
+                <button class="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                        aria-label="Actions for @expense.Title">
+                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" asp-controller="Expenses" asp-action="Edit" asp-route-id="@expense.Id"><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Edit</a></li>
+                    @if (expense.ReceiptFileName is not null)
+                    {
+                        <li><a class="dropdown-item" asp-controller="Expenses" asp-action="Receipt" asp-route-id="@expense.Id"><i class="bi bi-image me-2" aria-hidden="true"></i>View receipt</a></li>
+                    }
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                data-delete-url="@Url.Action("Delete", "Expenses", new { id = expense.Id })"
+                                data-delete-name="@expense.Title" data-delete-message="@deleteMessage">
+                            <i class="bi bi-trash3 me-2" aria-hidden="true"></i>Delete
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </li>
+}
+</ul>

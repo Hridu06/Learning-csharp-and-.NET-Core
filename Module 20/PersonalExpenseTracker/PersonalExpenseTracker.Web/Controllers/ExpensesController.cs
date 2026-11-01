@@ -8,7 +8,12 @@ namespace PersonalExpenseTracker.Web.Controllers;
 
 public class ExpensesController(IExpenseService expenses, ICategoryService categories) : Controller
 {
-    public async Task<IActionResult> Index(CancellationToken ct) => View(await expenses.GetAllAsync(ct));
+    public async Task<IActionResult> Index(ExpenseListQuery query, CancellationToken ct)
+    {
+        var result = await expenses.SearchAsync(query.ToSearch(), ct);
+        query.Page = result.Page;
+        return View(new ExpenseIndexViewModel(query, result, await categories.GetAllAsync(ct)));
+    }
 
     public async Task<IActionResult> Create(CancellationToken ct)
     {
@@ -76,20 +81,15 @@ public class ExpensesController(IExpenseService expenses, ICategoryService categ
         return View(model);
     }
 
-    public async Task<IActionResult> Delete(int id, CancellationToken ct)
-    {
-        var expense = await expenses.GetByIdAsync(id, ct);
-        return expense is null ? NotFound() : View(expense);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken ct)
+    // Confirmation happens in the shared delete modal; returnUrl keeps the user's filters and page.
+    [HttpPost]
+    public async Task<IActionResult> Delete(int id, string? returnUrl, CancellationToken ct)
     {
         var result = await expenses.DeleteAsync(id, ct);
         if (result.NotFound) return NotFound();
         if (result.Succeeded) FlashSuccess(result, "Expense deleted successfully.");
         else TempData["Error"] = result.Error;
-        return RedirectToAction(nameof(Index));
+        return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Receipt(int id, CancellationToken ct)

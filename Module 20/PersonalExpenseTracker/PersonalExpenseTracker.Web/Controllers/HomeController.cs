@@ -13,4 +13,8 @@ public class HomeController : Controller
     {
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
     });
+
+    // Re-executed by the status code pages middleware for 404s and other non-success responses.
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Status(int id) => View(id);
 }

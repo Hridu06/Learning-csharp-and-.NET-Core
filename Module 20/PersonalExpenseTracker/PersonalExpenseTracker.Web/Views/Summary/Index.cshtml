@@ -1,55 +1,185 @@
 @model SummaryDto
-@{ ViewData["Title"] = "Summary"; }
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div><h1 class="h2 mb-1">Your spending, at a glance</h1><p class="text-muted mb-0">Keep track of the everyday expenses that add up.</p></div>
-    <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create">+ Add expense</a>
+@{
+    ViewData["Title"] = "Dashboard";
+    var change = Model.MonthOverMonthChange;
+    var top = Model.TopCategory;
+    var spending = Model.Categories.Where(c => c.Total > 0).OrderByDescending(c => c.Total).ToList();
+    var today = DateTime.Today;
+
+    var chartData = new
+    {
+        months = Model.MonthlyTotals.Select(m => new { label = m.Month.ToString("MMM yy"), total = m.Total }),
+        categories = spending.Select(c => new { name = c.Name, color = c.Color, total = c.Total })
+    };
+}
+
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">@today.ToString("dddd, dd MMMM yyyy")</p>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Here's your spending overview for @Model.Month.ToString("MMMM yyyy").</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary" asp-controller="Expenses" asp-action="Index"><i class="bi bi-list-ul me-1" aria-hidden="true"></i> All expenses</a>
+        <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
+    </div>
 </div>
+
 <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card h-100 border-primary shadow-sm"><div class="card-body">
-        <h2 class="h6 text-muted">This month &middot; @Model.Month.ToString("MMMM yyyy")</h2>
-        <p class="h3 mb-0 text-primary">BDT @Model.CurrentMonthTotal.ToString("N2")</p>
-    </div></div></div>
-    <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
-        <h2 class="h6 text-muted">All-time spending</h2>
-        <p class="h3 mb-0">BDT @Model.Categories.Sum(c => c.Total).ToString("N2")</p>
-    </div></div></div>
-    <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
-        <h2 class="h6 text-muted">Expenses recorded</h2>
-        <p class="h3 mb-0">@Model.Categories.Sum(c => c.ExpenseCount)</p>
-    </div></div></div>
-</div>
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white py-3"><h2 class="h5 mb-0">Spending by category <span class="text-muted fw-normal small">/ all time</span></h2></div>
-    @if (Model.Categories.Count == 0)
-    {
-        <div class="card-body text-muted">No categories yet. <a asp-controller="Categories" asp-action="Create">Add a category</a> to get started.</div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light"><tr><th scope="col">Category</th><th scope="col" class="text-end">Expenses</th><th scope="col" class="text-end">Total (BDT)</th></tr></thead>
-                <tbody>
-                @foreach (var category in Model.Categories)
-                {
-                    <tr><td>@category.Name</td><td class="text-end">@category.ExpenseCount</td><td class="text-end">@category.Total.ToString("N2")</td></tr>
-                }
-                </tbody>
-                <tfoot class="table-light"><tr><th scope="row">Total</th><td class="text-end fw-semibold">@Model.Categories.Sum(c => c.ExpenseCount)</td><td class="text-end fw-semibold">@Model.Categories.Sum(c => c.Total).ToString("N2")</td></tr></tfoot>
-            </table>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-label">This month</span>
+                    <span class="stat-icon stat-icon-primary"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
+                </div>
+                <div class="stat-value">@Money(Model.CurrentMonthTotal)</div>
+                <div class="stat-foot">
+                    @if (change is null)
+                    {
+                        <span class="text-body-secondary">No spending last month to compare</span>
+                    }
+                    else
+                    {
+                        @* Spending going up is shown as a warning, going down as good news. *@
+                        var up = change > 0;
+                        <span class="trend @(up ? "trend-up" : "trend-down")">
+                            <i class="bi bi-arrow-@(up ? "up" : "down")-right" aria-hidden="true"></i>@Math.Abs(change.Value).ToString("0.#")%
+                        </span>
+                        <span class="text-body-secondary">vs last month</span>
+                    }
+                </div>
+            </div>
         </div>
-    }
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-label">Today</span>
+                    <span class="stat-icon stat-icon-info"><i class="bi bi-sun" aria-hidden="true"></i></span>
+                </div>
+                <div class="stat-value">@Money(Model.TodayTotal)</div>
+                <div class="stat-foot text-body-secondary">@today.ToString("dddd, dd MMM")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-label">All-time spending</span>
+                    <span class="stat-icon stat-icon-success"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+                </div>
+                <div class="stat-value">@Money(Model.AllTimeTotal)</div>
+                <div class="stat-foot text-body-secondary">@Model.ExpenseCount expense@(Model.ExpenseCount == 1 ? "" : "s") recorded</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-label">Top category</span>
+                    <span class="stat-icon stat-icon-warning"><i class="bi bi-trophy" aria-hidden="true"></i></span>
+                </div>
+                @if (top is null)
+                {
+                    <div class="stat-value text-body-tertiary">—</div>
+                    <div class="stat-foot text-body-secondary">Add expenses to see this</div>
+                }
+                else
+                {
+                    <div class="stat-value d-flex align-items-center gap-2 text-truncate">
+                        @Html.CategoryAvatar(top.Color, top.Icon, "cat-avatar-sm")<span class="text-truncate">@top.Name</span>
+                    </div>
+                    <div class="stat-foot text-body-secondary">
+                        @Money(top.Total) &middot; @((top.Total / Model.AllTimeTotal * 100).ToString("0.#"))% of total
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h2 class="h5 mb-0">5 most recent expenses</h2><a asp-controller="Expenses" asp-action="Index" class="small">View all expenses &rarr;</a>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-8">
+        <div class="card h-100">
+            <div class="card-header card-header-split">
+                <div>
+                    <h2 class="card-title">Monthly spending</h2>
+                    <p class="card-subtitle">Last 12 months</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-box">
+                    <canvas id="monthlyChart" role="img" aria-label="Bar chart of total spending for each of the last 12 months"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h2 class="card-title">By category</h2>
+                <p class="card-subtitle">All time</p>
+            </div>
+            <div class="card-body">
+                @if (spending.Count == 0)
+                {
+                    <div class="empty-state py-4">
+                        <div class="empty-icon"><i class="bi bi-pie-chart" aria-hidden="true"></i></div>
+                        <p class="text-body-secondary mb-0">No spending to break down yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="chart-box chart-box-sm mb-3">
+                        <canvas id="categoryChart" role="img" aria-label="Doughnut chart of spending by category"></canvas>
+                    </div>
+                    <ul class="legend-list list-unstyled mb-0">
+                        @foreach (var category in spending)
+                        {
+                            <li>
+                                <span class="legend-dot" style="--cat:@category.Color" aria-hidden="true"></span>
+                                <span class="flex-grow-1 text-truncate">@category.Name</span>
+                                <span class="text-body-secondary small">@((category.Total / Model.AllTimeTotal * 100).ToString("0.#"))%</span>
+                                <span class="fw-semibold text-nowrap">@Money(category.Total)</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header card-header-split">
+        <div>
+            <h2 class="card-title">Recent expenses</h2>
+            <p class="card-subtitle">Your 5 latest entries</p>
+        </div>
+        <a asp-controller="Expenses" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
     </div>
     @if (Model.RecentExpenses.Count == 0)
     {
-        <div class="card-body text-center py-5"><h3 class="h6">Your first expense starts here</h3><p class="text-muted mb-0">Use Add expense to start building your spending history.</p></div>
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-receipt" aria-hidden="true"></i></div>
+            <h3 class="h6">Your first expense starts here</h3>
+            <p class="text-body-secondary">Add an expense to start building your spending history.</p>
+            <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
+        </div>
     }
     else
     {
-        <partial name="_ExpenseTable" model="Model.RecentExpenses" />
+        <partial name="_ExpenseTable" model="new ExpenseTableViewModel(Model.RecentExpenses)" />
     }
 </div>
+
+<script type="application/json" id="dashboard-data">@Json.Serialize(chartData)</script>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

@@ -1,16 +1,63 @@
 @model CategoryFormViewModel
+@{
+    // Keep a colour that is no longer in the palette selectable so editing never silently changes it.
+    var colors = CategoryAppearance.Colors.Contains(Model.Color.ToUpperInvariant())
+        ? CategoryAppearance.Colors
+        : CategoryAppearance.Colors.Prepend(Model.Color).ToList();
+}
 <input type="hidden" asp-for="Id" />
-<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+<div asp-validation-summary="ModelOnly" role="alert"></div>
+
+<div class="category-preview mb-4" data-category-preview aria-hidden="true">
+    @Html.CategoryAvatar(Model.Color, Model.Icon, "cat-avatar-lg")
+    <div class="min-w-0">
+        <div class="small text-body-secondary">Preview</div>
+        <div class="fw-semibold fs-5 text-truncate" data-preview-name>@(string.IsNullOrWhiteSpace(Model.Name) ? "New category" : Model.Name)</div>
+    </div>
+</div>
+
 <div class="mb-3">
-    <label asp-for="Name" class="form-label"></label> <span class="text-danger" aria-hidden="true">*</span>
-    <input asp-for="Name" class="form-control" maxlength="100" placeholder="e.g. Healthcare" />
-    <span asp-validation-for="Name" class="text-danger"></span>
+    <label asp-for="Name" class="form-label required"></label>
+    <input asp-for="Name" class="form-control" maxlength="100" placeholder="e.g. Healthcare" autofocus="@(Model.Id == 0)" />
+    <span asp-validation-for="Name"></span>
     <div class="form-text">Choose a unique name. Names are compared without regard to letter case.</div>
 </div>
-<div class="mb-4">
-    <label asp-for="Description" class="form-label"></label> <span class="text-muted small">(optional)</span>
-    <textarea asp-for="Description" class="form-control" rows="3" maxlength="500"></textarea>
-    <span asp-validation-for="Description" class="text-danger"></span>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label> <span class="optional">(optional)</span>
+    <textarea asp-for="Description" class="form-control" rows="2" maxlength="500" placeholder="What kind of expenses belong here?"></textarea>
+    <span asp-validation-for="Description"></span>
 </div>
-<button class="btn btn-primary" type="submit">@(Model.Id == 0 ? "Save category" : "Save changes")</button>
-<a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+
+<fieldset class="mb-3">
+    <legend class="form-label required">Colour</legend>
+    <div class="swatch-group">
+        @for (var i = 0; i < colors.Count; i++)
+        {
+            var color = colors[i];
+            <input type="radio" class="btn-check" name="Color" id="color-@i" value="@color" autocomplete="off"
+                   checked="@string.Equals(color, Model.Color, StringComparison.OrdinalIgnoreCase)" />
+            <label class="swatch" for="color-@i" style="--swatch:@color" title="@color"><span class="visually-hidden">Colour @color</span></label>
+        }
+    </div>
+    <span asp-validation-for="Color"></span>
+</fieldset>
+
+<fieldset class="mb-4">
+    <legend class="form-label required">Icon</legend>
+    <div class="icon-grid">
+        @foreach (var icon in CategoryAppearance.Icons)
+        {
+            <input type="radio" class="btn-check" name="Icon" id="icon-@icon" value="@icon" autocomplete="off" checked="@(icon == Model.Icon)" />
+            <label class="icon-option" for="icon-@icon" title="@icon"><i class="bi bi-@icon" aria-hidden="true"></i><span class="visually-hidden">@icon</span></label>
+        }
+    </div>
+    <span asp-validation-for="Icon"></span>
+</fieldset>
+
+<div class="form-actions">
+    <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+    <button class="btn btn-primary" type="submit" data-loading-text="Saving…">
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>@(Model.Id == 0 ? "Save category" : "Save changes")
+    </button>
+</div>

@@ -1,0 +1,22 @@
+@model int
+@{
+    var (title, message, icon) = Model switch
+    {
+        404 => ("Page not found", "The page or record you're looking for doesn't exist or may have been deleted.", "compass"),
+        400 => ("Bad request", "That request didn't look quite right. Please check the link and try again.", "exclamation-circle"),
+        403 => ("Access denied", "You don't have permission to view this page.", "shield-lock"),
+        405 => ("Not allowed", "That action can't be performed this way.", "slash-circle"),
+        _ => ("Something went wrong", "We couldn't complete that request. Please try again.", "exclamation-octagon")
+    };
+    ViewData["Title"] = title;
+}
+<div class="status-page">
+    <div class="status-icon"><i class="bi bi-@icon" aria-hidden="true"></i></div>
+    <p class="status-code">@Model</p>
+    <h1 class="h3 fw-bold">@title</h1>
+    <p class="text-body-secondary">@message</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+        <button type="button" class="btn btn-outline-secondary" data-history-back><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Go back</button>
+        <a class="btn btn-primary" asp-controller="Summary" asp-action="Index"><i class="bi bi-house me-1" aria-hidden="true"></i> Back to dashboard</a>
+    </div>
+</div>

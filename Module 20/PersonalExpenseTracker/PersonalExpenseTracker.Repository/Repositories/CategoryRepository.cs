@@ -10,7 +10,7 @@ public class CategoryRepository(ExpenseTrackerDbContext context) : RepositoryBas
 {
     public async Task<IReadOnlyList<CategoryAggregate>> GetAllWithTotalsAsync(CancellationToken ct = default) =>
         await Context.ExpenseCategories.AsNoTracking().OrderBy(c => c.Name)
-            .Select(c => new CategoryAggregate(c.Id, c.Name, c.Description, c.Expenses.Count,
+            .Select(c => new CategoryAggregate(c.Id, c.Name, c.Description, c.Color, c.Icon, c.Expenses.Count,
                 c.Expenses.Sum(e => (decimal?)e.Amount) ?? 0m)).ToListAsync(ct);
 
     public Task<ExpenseCategory?> GetByIdAsync(int id, CancellationToken ct = default) =>

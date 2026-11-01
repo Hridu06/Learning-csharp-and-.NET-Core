@@ -1,11 +1,23 @@
 @model CategoryFormViewModel
 @{ ViewData["Title"] = "Edit category"; }
-<div class="form-page mx-auto">
-    <a asp-action="Index" class="text-decoration-none small">&larr; Back to categories</a>
-    <h1 class="h2 mt-3">Edit category</h1>
-    <p class="text-muted">Update the category name or description. Fields marked * are required.</p>
-    <div class="card shadow-sm"><div class="card-body p-4">
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post"><partial name="_Form" model="Model" /></form>
-    </div></div>
+<div class="form-page">
+    <div class="page-header">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Categories</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+            <h1 class="page-title">Edit category</h1>
+            <p class="page-subtitle">Update the name, description, colour or icon.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post"><partial name="_Form" model="Model" /></form>
+        </div>
+    </div>
 </div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

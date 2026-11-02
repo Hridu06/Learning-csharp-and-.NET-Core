@@ -1,180 +1,528 @@
 @model SummaryDto
 @{
     ViewData["Title"] = "Dashboard";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
     var change = Model.MonthOverMonthChange;
-    var top = Model.TopCategory;
-    var spending = Model.Categories.Where(c => c.Total > 0).OrderByDescending(c => c.Total).ToList();
     var today = DateTime.Today;
+    var firstName = (User.FindFirstValue(AppClaims.FullName) ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+
+    // Everything on this page describes the selected month, except the 12-month chart and loans.
+    var isCurrent = Model.IsCurrentMonth;
+    var currentName = Model.Month.ToString("MMMM");
+    var previousName = Model.Month.AddMonths(-1).ToString("MMMM");
+    var inMonth = isCurrent ? "this month" : $"in {currentName}";
+    var monthPossessive = isCurrent ? "this month's" : $"{currentName}'s";
+    var soFar = isCurrent ? " so far" : "";
+    string MonthKey(DateTime month) => month.ToString("yyyy-MM", inv);
+    var previousKey = MonthKey(Model.Month.AddMonths(-1));
+    // The month after the selected one; linking to the current month drops the parameter.
+    var nextMonth = Model.Month.AddMonths(1);
+    string? nextKey = isCurrent ? null : nextMonth == Model.CurrentMonth ? "" : MonthKey(nextMonth);
+
+    var spending = Model.CurrentMonthCategories.Where(c => c.Total > 0).OrderByDescending(c => c.Total).ToList();
+    var top = spending.FirstOrDefault();
+    var topShare = top is null || Model.CurrentMonthTotal == 0 ? 0 : top.Total / Model.CurrentMonthTotal * 100;
+
+    var yearTotal = Model.MonthlyTotals.Sum(m => m.Total);
+    var monthlyAverage = Model.MonthlyTotals.Count == 0 ? 0 : yearTotal / Model.MonthlyTotals.Count;
+    var peak = Model.MonthlyTotals.Where(m => m.Total > 0).MaxBy(m => m.Total);
+
+    var net = Model.NetThisMonth;
+    var savingsRate = Model.SavingsRate;
+    var budget = Model.Budget;
+    var loans = Model.Loans;
+    var budgetLines = budget.Lines.ToDictionary(l => l.CategoryId);
+    string BudgetClass(BudgetStatus status) => status switch
+    {
+        BudgetStatus.Over => "budget-over",
+        BudgetStatus.Warning => "budget-warn",
+        _ => "budget-ok"
+    };
+
+    // Budget usage leads when a budget exists (it's the most actionable), then savings, then spending trends.
+    var insight = budget.HasBudget
+        ? budget.Status == BudgetStatus.Over
+            ? $"You went over {monthPossessive} budget by {Money(-budget.Remaining!.Value)}."
+            : isCurrent
+                ? $"You've used {budget.UsedPercent:0}% of your monthly budget{(budget.AheadOfPace ? ", a bit ahead of pace." : " and you're on track.")}"
+                : $"You used {budget.UsedPercent:0}% of your budget in {currentName}."
+        : savingsRate switch
+        {
+            not null when net < 0 => $"Heads up: you spent {Money(-net)} more than you earned {inMonth}.",
+            not null => $"Great! You kept {savingsRate:0}% of {monthPossessive} income.",
+            _ => (change, Model.CurrentMonthTotal) switch
+            {
+                (_, 0) when Model.AllTimeTotal == 0 => "Add your first expense to start seeing insights.",
+                (_, 0) => isCurrent ? "No spending recorded yet this month. A fresh start!" : $"No spending was recorded in {currentName}.",
+                (null, _) => $"{top?.Name ?? "Your top category"} leads your spending {inMonth} at {topShare:0}%.",
+                ( < 0, _) => $"Nice! You spent {Math.Abs(change.Value):0}% less than in {previousName}{soFar}.",
+                ( > 0, _) => $"Heads up: you spent {change.Value:0}% more than in {previousName}{soFar}.",
+                _ => $"Your spending matches {previousName}{soFar}."
+            }
+        };
+
+    var hasIncome = Model.MonthlyTotals.Any(m => m.Income > 0);
+    var yearIncome = Model.MonthlyTotals.Sum(m => m.Income);
+
+    // Bars in the month comparison are scaled to the larger of the two months.
+    var compareMax = Math.Max(Model.CurrentMonthTotal, Model.PreviousMonthTotal);
+    var monthDiff = Model.CurrentMonthTotal - Model.PreviousMonthTotal;
+    var daysInMonth = Model.DaysInMonth;
+    var dailyAverage = Model.CurrentMonthTotal / Math.Max(1, Model.DayOfMonth);
+    var projected = dailyAverage * daysInMonth;
+    string Width(decimal value) => (compareMax == 0 ? 0 : value / compareMax * 100).ToString("0.##", inv);
+
+    // Many categories would crowd the dashboard, so both the tiles and the doughnut group the tail.
+    const int MaxSlices = 5;
+    const string OtherColor = "#94A3B8";
+    var chartSlices = spending.Take(MaxSlices).Select(c => new { name = c.Name, color = c.Color, total = c.Total }).ToList();
+    if (spending.Count > MaxSlices)
+        chartSlices.Add(new { name = "Other", color = OtherColor, total = spending.Skip(MaxSlices).Sum(c => c.Total) });
+    // The tile row always has four slots: the month's top spenders, topped up with other categories at ৳0.
+    // With more than four spending categories it shows the top three plus a "+N more" tile; if the user
+    // has fewer than four categories, the remaining slots invite them to add one.
+    const int TileCount = 4;
+    List<CategoryDto> tileCategories, hiddenCategories;
+    if (spending.Count > TileCount)
+    {
+        tileCategories = spending.Take(TileCount - 1).ToList();
+        hiddenCategories = spending.Skip(TileCount - 1).ToList();
+    }
+    else
+    {
+        var shown = spending.Select(c => c.Id).ToHashSet();
+        var fillers = Model.Categories.Where(c => !shown.Contains(c.Id))
+            .OrderByDescending(c => c.Total).ThenBy(c => c.Name)
+            .Take(TileCount - spending.Count)
+            .Select(c => c with { Total = 0, ExpenseCount = 0 });
+        tileCategories = spending.Concat(fillers).ToList();
+        hiddenCategories = [];
+    }
+    var addCategoryTiles = TileCount - tileCategories.Count - (hiddenCategories.Count > 0 ? 1 : 0);
+    var insightColor = top?.Color ?? "#6366F1";
+    const int MaxMonthRows = 5;
+    var monthCategories = spending;
+    var monthFrom = Model.Month.ToString("yyyy-MM-dd", inv);
+    var monthTo = Model.Month.AddMonths(1).AddDays(-1).ToString("yyyy-MM-dd", inv);
 
     var chartData = new
     {
-        months = Model.MonthlyTotals.Select(m => new { label = m.Month.ToString("MMM yy"), total = m.Total }),
-        categories = spending.Select(c => new { name = c.Name, color = c.Color, total = c.Total })
+        // The last month in the trend is the selected one; key lets a bar click open that month.
+        months = Model.MonthlyTotals.Select(m => new { label = m.Month.ToString("MMM"), full = m.Month.ToString("MMMM yyyy"), key = MonthKey(m.Month), total = m.Total, income = m.Income }),
+        currentKey = MonthKey(Model.CurrentMonth),
+        hasIncome,
+        average = Math.Round(monthlyAverage, 2),
+        total = Model.CurrentMonthTotal,
+        categories = chartSlices
     };
 }
 
 <div class="page-header">
     <div>
         <p class="page-eyebrow">@today.ToString("dddd, dd MMMM yyyy")</p>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Here's your spending overview for @Model.Month.ToString("MMMM yyyy").</p>
+        <h1 class="page-title dash-greeting">@(firstName is null ? "Overview" : $"Welcome back, {firstName}!")</h1>
     </div>
     <div class="page-actions">
-        <a class="btn btn-outline-secondary" asp-controller="Expenses" asp-action="Index"><i class="bi bi-list-ul me-1" aria-hidden="true"></i> All expenses</a>
+        <a class="btn btn-outline-secondary" asp-controller="Income" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add income</a>
         <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card h-100">
-            <div class="card-body">
-                <div class="stat-head">
-                    <span class="stat-label">This month</span>
-                    <span class="stat-icon stat-icon-primary"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
-                </div>
-                <div class="stat-value">@Money(Model.CurrentMonthTotal)</div>
-                <div class="stat-foot">
-                    @if (change is null)
-                    {
-                        <span class="text-body-secondary">No spending last month to compare</span>
-                    }
-                    else
-                    {
-                        @* Spending going up is shown as a warning, going down as good news. *@
-                        var up = change > 0;
-                        <span class="trend @(up ? "trend-up" : "trend-down")">
-                            <i class="bi bi-arrow-@(up ? "up" : "down")-right" aria-hidden="true"></i>@Math.Abs(change.Value).ToString("0.#")%
-                        </span>
-                        <span class="text-body-secondary">vs last month</span>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card h-100">
-            <div class="card-body">
-                <div class="stat-head">
-                    <span class="stat-label">Today</span>
-                    <span class="stat-icon stat-icon-info"><i class="bi bi-sun" aria-hidden="true"></i></span>
-                </div>
-                <div class="stat-value">@Money(Model.TodayTotal)</div>
-                <div class="stat-foot text-body-secondary">@today.ToString("dddd, dd MMM")</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card h-100">
-            <div class="card-body">
-                <div class="stat-head">
-                    <span class="stat-label">All-time spending</span>
-                    <span class="stat-icon stat-icon-success"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
-                </div>
-                <div class="stat-value">@Money(Model.AllTimeTotal)</div>
-                <div class="stat-foot text-body-secondary">@Model.ExpenseCount expense@(Model.ExpenseCount == 1 ? "" : "s") recorded</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card h-100">
-            <div class="card-body">
-                <div class="stat-head">
-                    <span class="stat-label">Top category</span>
-                    <span class="stat-icon stat-icon-warning"><i class="bi bi-trophy" aria-hidden="true"></i></span>
-                </div>
-                @if (top is null)
-                {
-                    <div class="stat-value text-body-tertiary">—</div>
-                    <div class="stat-foot text-body-secondary">Add expenses to see this</div>
-                }
-                else
-                {
-                    <div class="stat-value d-flex align-items-center gap-2 text-truncate">
-                        @Html.CategoryAvatar(top.Color, top.Icon, "cat-avatar-sm")<span class="text-truncate">@top.Name</span>
-                    </div>
-                    <div class="stat-foot text-body-secondary">
-                        @Money(top.Total) &middot; @((top.Total / Model.AllTimeTotal * 100).ToString("0.#"))% of total
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
+@* Month switcher: every card below follows the selected month. *@
+<div class="month-bar mb-3">
+    <nav class="month-switcher" aria-label="Choose month">
+        <a class="month-step" asp-action="Index" asp-route-month="@previousKey" aria-label="Previous month" data-bs-title="@Model.Month.AddMonths(-1).ToString("MMMM yyyy")">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </a>
+        <form method="get" asp-action="Index" class="month-picker">
+            <label class="visually-hidden" for="month-picker">Month</label>
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
+            <span class="month-label" aria-hidden="true">@Model.Month.ToString("MMMM yyyy")</span>
+            <input id="month-picker" type="month" name="month" value="@MonthKey(Model.Month)" max="@MonthKey(Model.CurrentMonth)" data-autosubmit />
+        </form>
+        @if (nextKey is null)
+        {
+            <span class="month-step disabled" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+        }
+        else
+        {
+            <a class="month-step" asp-action="Index" asp-route-month="@(nextKey == "" ? null : nextKey)" aria-label="Next month" data-bs-title="@nextMonth.ToString("MMMM yyyy")">
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </a>
+        }
+    </nav>
+    @if (isCurrent)
+    {
+        <span class="month-note">Day @Model.DayOfMonth of @daysInMonth</span>
+    }
+    else
+    {
+        <span class="month-note">Viewing a past month</span>
+        <a class="btn btn-sm btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Back to this month</a>
+    }
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-xl-8">
-        <div class="card h-100">
-            <div class="card-header card-header-split">
+<div class="row g-3">
+    @* ---------- Main column ---------- *@
+    <div class="col-xl-8 d-flex flex-column gap-3">
+        <div class="row g-3">
+            <div class="col-md-7">
+                <div class="card h-100 insight-card" style="--insight:@insightColor">
+                    <div class="card-header card-header-split border-0 pb-0">
+                        <h2 class="card-title">Insights</h2>
+                        <span class="small text-body-secondary">@currentName by category</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="insight-body">
+                            @if (spending.Count > 0)
+                            {
+                                <div class="insight-chart">
+                                    <canvas id="categoryChart" role="img" aria-label="Doughnut chart of spending by category"></canvas>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-icon mb-0"><i class="bi bi-pie-chart" aria-hidden="true"></i></div>
+                            }
+                            <div class="min-w-0">
+                                <p class="insight-text">@insight</p>
+                                @if (top is not null)
+                                {
+                                    <p class="insight-sub">Top category: <strong class="text-body">@top.Name</strong> &middot; @Money(top.Total)</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card stat-card-featured h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="stat-label">Balance · @Model.Month.ToString("MMMM yyyy")</div>
+                            <p class="balance-value">@(net < 0 ? "−" : "")@Money(Math.Abs(net))</p>
+                            @if (savingsRate is not null)
+                            {
+                                <span class="trend mt-2 @(net < 0 ? "trend-up" : "trend-down")">
+                                    @if (net < 0)
+                                    {
+                                        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>@:Overspent
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-piggy-bank me-1" aria-hidden="true"></i>@:Saved @savingsRate.Value.ToString("0")% of income
+                                    }
+                                </span>
+                            }
+                            else
+                            {
+                                <a class="balance-cta d-inline-block mt-2" asp-controller="Income" asp-action="Create">
+                                    <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add @(isCurrent ? "this month's" : currentName + "'s") income
+                                </a>
+                            }
+                        </div>
+                        <div class="balance-split">
+                            <div>
+                                <div class="label"><i class="bi bi-arrow-down-left me-1" aria-hidden="true"></i>Income</div>
+                                <div class="value value-income">@Money(Model.CurrentMonthIncome)</div>
+                            </div>
+                            <div>
+                                <div class="label"><i class="bi bi-arrow-up-right me-1" aria-hidden="true"></i>Spent</div>
+                                <div class="value value-spent">@Money(Model.CurrentMonthTotal)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+                @foreach (var category in tileCategories)
+                {
+                    <div class="col-6 col-md-3">
+                        <a class="cat-tile @(category.Total == 0 ? "cat-tile-zero" : "")" style="--cat:@category.Color" asp-controller="Expenses" asp-action="Index" asp-route-categoryId="@category.Id" asp-route-from="@monthFrom" asp-route-to="@monthTo"
+                           aria-label="@category.Name: @Money(category.Total). View these expenses">
+                            <span class="cat-tile-icon"><i class="bi bi-@category.Icon" aria-hidden="true"></i></span>
+                            <span>
+                                <span class="cat-tile-amount d-block">@Money(category.Total)</span>
+                                <span class="cat-tile-name">@category.Name</span>
+                            </span>
+                        </a>
+                    </div>
+                }
+                @if (hiddenCategories.Count > 0)
+                {
+                    <div class="col-6 col-md-3">
+                        <a class="cat-tile cat-tile-more" style="--cat:@OtherColor" asp-controller="Categories" asp-action="Index"
+                           aria-label="@hiddenCategories.Count more categories: @Money(hiddenCategories.Sum(c => c.Total)). View all categories">
+                            <span class="cat-tile-icon"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i></span>
+                            <span>
+                                <span class="cat-tile-amount d-block">@Money(hiddenCategories.Sum(c => c.Total))</span>
+                                <span class="cat-tile-name">+@hiddenCategories.Count more categories</span>
+                            </span>
+                        </a>
+                    </div>
+                }
+                @for (var i = 0; i < addCategoryTiles; i++)
+                {
+                    <div class="col-6 col-md-3">
+                        <a class="cat-tile cat-tile-add" asp-controller="Categories" asp-action="Create" aria-label="Add a category">
+                            <span class="cat-tile-icon"><i class="bi bi-plus-lg" aria-hidden="true"></i></span>
+                            <span>
+                                <span class="cat-tile-amount d-block">Add category</span>
+                                <span class="cat-tile-name">Organize your spending</span>
+                            </span>
+                        </a>
+                    </div>
+                }
+            </div>
+
+        <div class="card flex-grow-1">
+            <div class="card-header card-header-split border-0 pb-0">
                 <div>
-                    <h2 class="card-title">Monthly spending</h2>
-                    <p class="card-subtitle">Last 12 months</p>
+                    <h2 class="card-title">Overview</h2>
+                    <p class="card-subtitle">@(hasIncome ? "Income and spending" : "Monthly spending"), 12 months to @Model.Month.ToString("MMM yyyy") · click a bar to open that month</p>
+                </div>
+                <div class="chart-legend" aria-hidden="true">
+                    @if (hasIncome) { <span><i class="dot dot-income"></i>Income</span> }
+                    <span><i class="dot"></i>@(hasIncome ? "Expenses" : "Spending")</span>
+                    <span><i class="dash"></i>Average spending</span>
                 </div>
             </div>
             <div class="card-body">
                 <div class="chart-box">
-                    <canvas id="monthlyChart" role="img" aria-label="Bar chart of total spending for each of the last 12 months"></canvas>
+                    <canvas id="monthlyChart" role="img" aria-label="@(hasIncome ? "Bar chart comparing income and spending" : "Bar chart of total spending") for each of the last 12 months, with average monthly spending shown as a dashed line"></canvas>
+                </div>
+                <div class="chart-foot">
+                    @if (hasIncome)
+                    {
+                        <div>
+                            <div class="kpi-label">12-month income</div>
+                            <div class="kpi-value income-amount">@Money(yearIncome)</div>
+                        </div>
+                    }
+                    <div>
+                        <div class="kpi-label">12-month spending</div>
+                        <div class="kpi-value">@Money(yearTotal)</div>
+                    </div>
+                    @if (hasIncome)
+                    {
+                        var yearNet = yearIncome - yearTotal;
+                        <div>
+                            <div class="kpi-label">12-month @(yearNet < 0 ? "shortfall" : "savings")</div>
+                            <div class="kpi-value @(yearNet < 0 ? "text-danger" : "")">@Money(Math.Abs(yearNet))</div>
+                        </div>
+                    }
+                    <div>
+                        <div class="kpi-label">Average spending</div>
+                        <div class="kpi-value">@Money(monthlyAverage)</div>
+                    </div>
+                    @if (!hasIncome)
+                    {
+                        <div>
+                            <div class="kpi-label">Highest month</div>
+                            <div class="kpi-value">@(peak is null ? "—" : $"{peak.Month:MMM yyyy}")</div>
+                        </div>
+                    }
+                    @* The one place all-time totals appear; everything else on the page is per month. *@
+                    <div>
+                        <div class="kpi-label">All-time spending</div>
+                        <div class="kpi-value">@Money(Model.AllTimeTotal) <span class="small text-body-secondary fw-normal">· @Model.ExpenseCount expense@(Model.ExpenseCount == 1 ? "" : "s")</span></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @* ---------- Right panel ---------- *@
     <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h2 class="card-title">By category</h2>
-                <p class="card-subtitle">All time</p>
+        <div class="card panel-card h-100">
+            <div class="card-header card-header-split border-0 pb-0">
+                <h2 class="card-title">@(isCurrent ? "Latest transactions" : $"{currentName} transactions")</h2>
+                <a class="small fw-semibold" asp-controller="Expenses" asp-action="Index" asp-route-from="@monthFrom" asp-route-to="@monthTo">Show more</a>
             </div>
             <div class="card-body">
-                @if (spending.Count == 0)
+                @if (Model.RecentExpenses.Count == 0)
                 {
-                    <div class="empty-state py-4">
-                        <div class="empty-icon"><i class="bi bi-pie-chart" aria-hidden="true"></i></div>
-                        <p class="text-body-secondary mb-0">No spending to break down yet.</p>
+                    <div class="empty-state px-0">
+                        <div class="empty-icon"><i class="bi bi-receipt" aria-hidden="true"></i></div>
+                        <h3 class="h6">Your first expense starts here</h3>
+                        <p class="text-body-secondary">Add an expense to start building your spending history.</p>
+                        <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
                     </div>
                 }
                 else
                 {
-                    <div class="chart-box chart-box-sm mb-3">
-                        <canvas id="categoryChart" role="img" aria-label="Doughnut chart of spending by category"></canvas>
-                    </div>
-                    <ul class="legend-list list-unstyled mb-0">
-                        @foreach (var category in spending)
+                    <ul class="txn-list">
+                        @foreach (var expense in Model.RecentExpenses)
                         {
                             <li>
-                                <span class="legend-dot" style="--cat:@category.Color" aria-hidden="true"></span>
-                                <span class="flex-grow-1 text-truncate">@category.Name</span>
-                                <span class="text-body-secondary small">@((category.Total / Model.AllTimeTotal * 100).ToString("0.#"))%</span>
-                                <span class="fw-semibold text-nowrap">@Money(category.Total)</span>
+                                <a class="txn-item" asp-controller="Expenses" asp-action="Edit" asp-route-id="@expense.Id" aria-label="Edit @expense.Title">
+                                    @Html.CategoryAvatar(expense.CategoryColor, expense.CategoryIcon)
+                                    <span class="flex-grow-1 min-w-0">
+                                        <span class="txn-title d-block text-truncate">@expense.Title</span>
+                                        <span class="txn-meta d-block text-truncate">
+                                            @expense.CategoryName &middot; @ShortDate(expense.Date)
+                                            @if (expense.ReceiptFileName is not null) { <i class="bi bi-paperclip" aria-label="Has receipt"></i> }
+                                        </span>
+                                    </span>
+                                    <span class="txn-amount">−@Money(expense.Amount)</span>
+                                </a>
                             </li>
                         }
                     </ul>
                 }
+
+                @* The current month is still in progress, so the comparison says how far into it we are. *@
+                <div class="compare-block">
+                    <h3 class="card-title">@currentName vs @previousName</h3>
+                    @if (Model.CurrentMonthTotal == 0 && Model.PreviousMonthTotal == 0)
+                    {
+                        <p class="compare-headline text-body-secondary">No spending in either month yet.</p>
+                    }
+                    else
+                    {
+                        <p class="compare-headline">
+                            @if (monthDiff == 0)
+                            {
+                                @:Same as @previousName@soFar
+                            }
+                            else
+                            {
+                                <span class="trend @(monthDiff > 0 ? "trend-up" : "trend-down")">
+                                    <i class="bi bi-arrow-@(monthDiff > 0 ? "up" : "down")-right" aria-hidden="true"></i>@Money(Math.Abs(monthDiff))
+                                </span>
+                                <span>@(monthDiff > 0 ? "more" : "less") than @previousName@soFar</span>
+                            }
+                        </p>
+                    }
+                    <p class="compare-note">
+                        @if (isCurrent)
+                        {
+                            @:@currentName is on day @Model.DayOfMonth of @daysInMonth.
+                            if (Model.CurrentMonthTotal > 0)
+                            {
+                                @:You're averaging <strong class="text-body">@Money(dailyAverage)</strong> a day, about <strong class="text-body">@Money(projected)</strong> by month end.
+                            }
+                        }
+                        else
+                        {
+                            @:@currentName averaged <strong class="text-body">@Money(dailyAverage)</strong> a day over @daysInMonth days.
+                        }
+                    </p>
+                    <div class="compare-row">
+                        <div class="d-flex justify-content-between small">
+                            <span><span class="legend-dot me-1" style="--cat:var(--chart-primary)" aria-hidden="true"></span>@currentName <span class="text-body-secondary">· @(isCurrent ? "so far" : "full month")</span></span>
+                            <strong class="amount">@Money(Model.CurrentMonthTotal)</strong>
+                        </div>
+                        <div class="compare-bar" aria-hidden="true"><span style="width:@Width(Model.CurrentMonthTotal)%"></span></div>
+                    </div>
+                    <div class="compare-row">
+                        <div class="d-flex justify-content-between small">
+                            <span><span class="legend-dot legend-dot-previous me-1" aria-hidden="true"></span>@previousName <span class="text-body-secondary">· full month</span></span>
+                            <strong class="amount">@Money(Model.PreviousMonthTotal)</strong>
+                        </div>
+                        <div class="compare-bar is-previous" aria-hidden="true"><span style="width:@Width(Model.PreviousMonthTotal)%"></span></div>
+                    </div>
+                </div>
+
+                @* This month only: the tiles and doughnut above are all-time. *@
+                <div class="compare-block">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h3 class="card-title">Where @currentName's money went</h3>
+                        <a class="small fw-semibold" asp-controller="Budgets" asp-action="Index">Budgets</a>
+                    </div>
+                    @if (monthCategories.Count == 0)
+                    {
+                        <p class="compare-note mt-2 mb-0">No spending recorded @inMonth@(isCurrent ? " yet" : "").</p>
+                    }
+                    else
+                    {
+                        <ul class="month-cats list-unstyled mb-0">
+                            @foreach (var category in monthCategories.Take(MaxMonthRows))
+                            {
+                                // With a budget the bar shows spending against the limit; otherwise the share of this month.
+                                var line = budgetLines.GetValueOrDefault(category.Id);
+                                var hasLimit = line?.Limit is not null;
+                                var share = category.Total / Model.CurrentMonthTotal * 100;
+                                var barPercent = hasLimit ? Math.Min(100, line!.Percent ?? 0) : share;
+                                <li style="--cat:@category.Color" class="@(hasLimit ? BudgetClass(line!.Status) : "")">
+                                    <a class="month-cat" asp-controller="Expenses" asp-action="Index" asp-route-categoryId="@category.Id"
+                                       asp-route-from="@monthFrom" asp-route-to="@monthTo"
+                                       aria-label="@category.Name: @Money(category.Total)@(hasLimit ? $" of {Money(line!.Limit!.Value)} budget" : $", {share:0}% of {currentName}"). View these expenses">
+                                        @Html.CategoryAvatar(category.Color, category.Icon, "cat-avatar-sm")
+                                        <span class="flex-grow-1 min-w-0">
+                                            <span class="d-flex justify-content-between gap-2">
+                                                <span class="fw-semibold text-truncate">@category.Name</span>
+                                                <span class="text-nowrap">
+                                                    <span class="fw-semibold amount">@Money(category.Total)</span>
+                                                    @if (hasLimit) { <span class="small text-body-secondary">/ @Money(line!.Limit!.Value)</span> }
+                                                </span>
+                                            </span>
+                                            <span class="d-flex align-items-center gap-2 mt-1">
+                                                <span class="legend-bar flex-grow-1 mt-0">
+                                                    <span style="width:@barPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%;@(hasLimit ? "background:var(--budget)" : "")"></span>
+                                                </span>
+                                                @if (hasLimit)
+                                                {
+                                                    <span class="small budget-status-text text-end" style="min-width:2.4rem">@line!.Percent!.Value.ToString("0")%</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="small text-body-secondary text-end" style="min-width:2.4rem">@share.ToString("0")%</span>
+                                                }
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        @if (monthCategories.Count > MaxMonthRows)
+                        {
+                            var rest = monthCategories.Skip(MaxMonthRows).ToList();
+                            <p class="compare-note mt-2 mb-0">+@rest.Count more @(rest.Count == 1 ? "category" : "categories") &middot; @Money(rest.Sum(c => c.Total))</p>
+                        }
+                    }
+                </div>
+
+                @* Loans stay out of income and spending; this is just the outstanding position. *@
+                @if (loans.HasLoans)
+                {
+                    <div class="compare-block">
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <h3 class="card-title">Loans</h3>
+                            <a class="small fw-semibold" asp-controller="Loans" asp-action="Index">View loans</a>
+                        </div>
+                        <div class="loan-mini">
+                            <div>
+                                <div class="kpi-label">You owe</div>
+                                <div class="kpi-value @(loans.YouOwe > 0 ? "text-danger" : "")">@Money(loans.YouOwe)</div>
+                            </div>
+                            <div>
+                                <div class="kpi-label">Owed to you</div>
+                                <div class="kpi-value income-amount">@Money(loans.OwedToYou)</div>
+                            </div>
+                        </div>
+                        @if (loans.NextDue is { } next)
+                        {
+                            var overdue = next.Status == LoanStatus.Overdue;
+                            <a class="month-cat mt-2" asp-controller="Loans" asp-action="Details" asp-route-id="@next.Id">
+                                <span class="cat-avatar cat-avatar-sm" style="--cat:@(overdue ? "#EF4444" : "#6366F1")"><i class="bi bi-@(overdue ? "exclamation-triangle" : "calendar-event")" aria-hidden="true"></i></span>
+                                <span class="flex-grow-1 min-w-0 small">
+                                    <span class="d-block fw-semibold text-truncate">@(overdue ? "Overdue" : "Next due"): @next.Person</span>
+                                    <span class="text-body-secondary">@ShortDate(next.DueDate!.Value) &middot; @Money(next.Remaining) @(next.Type == LoanType.Borrowed ? "to repay" : "to collect")</span>
+                                </span>
+                            </a>
+                        }
+                        @if (loans.OverdueCount > 1)
+                        {
+                            <p class="compare-note text-danger mt-2 mb-0">@loans.OverdueCount loans are overdue.</p>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
-</div>
-
-<div class="card">
-    <div class="card-header card-header-split">
-        <div>
-            <h2 class="card-title">Recent expenses</h2>
-            <p class="card-subtitle">Your 5 latest entries</p>
-        </div>
-        <a asp-controller="Expenses" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
-    </div>
-    @if (Model.RecentExpenses.Count == 0)
-    {
-        <div class="empty-state">
-            <div class="empty-icon"><i class="bi bi-receipt" aria-hidden="true"></i></div>
-            <h3 class="h6">Your first expense starts here</h3>
-            <p class="text-body-secondary">Add an expense to start building your spending history.</p>
-            <a class="btn btn-primary" asp-controller="Expenses" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add expense</a>
-        </div>
-    }
-    else
-    {
-        <partial name="_ExpenseTable" model="new ExpenseTableViewModel(Model.RecentExpenses)" />
-    }
 </div>
 
 <script type="application/json" id="dashboard-data">@Json.Serialize(chartData)</script>

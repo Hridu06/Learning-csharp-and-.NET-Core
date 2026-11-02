@@ -7,4 +7,6 @@ public class ApplicationUser : IdentityUser
     public string FullName { get; set; } = string.Empty;
     public string? AvatarFileName { get; set; }
     public DateTime CreatedAt { get; set; }
+    // Optional limit for all spending in a month, alongside any per-category budgets.
+    public decimal? MonthlyBudget { get; set; }
 }

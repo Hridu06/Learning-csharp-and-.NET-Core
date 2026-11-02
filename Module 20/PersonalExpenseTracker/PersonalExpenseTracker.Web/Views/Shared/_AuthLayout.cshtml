@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Track your personal expenses, organize categories and keep receipts in one place." />
-    <title>@ViewData["Title"] · Expense Tracker</title>
+    <meta name="description" content="TakaTrack: track every taka. Record expenses, organize categories and keep receipts in one place." />
+    <title>@ViewData["Title"] · TakaTrack</title>
     <script>
         (function () {
             var theme;
@@ -27,22 +27,64 @@
 <body>
     <div class="auth-shell">
         <aside class="auth-brand" aria-hidden="true">
-            <div class="brand"><img src="~/favicon.svg" width="40" height="40" alt="" /><span>Expense<strong>Tracker</strong></span></div>
+            @* Abstract finance motif: dot grid, flowing lines, rings and a rising trend line. Purely decorative. *@
+            <svg class="auth-art" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="authDots" width="24" height="24" patternUnits="userSpaceOnUse">
+                        <circle cx="2" cy="2" r="1.1" fill="#ffffff" fill-opacity=".09" />
+                    </pattern>
+                    <linearGradient id="authFlow" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0" stop-color="#6f69f7" stop-opacity="0" />
+                        <stop offset=".5" stop-color="#8a85ff" stop-opacity=".55" />
+                        <stop offset="1" stop-color="#a78bfa" stop-opacity="0" />
+                    </linearGradient>
+                    <linearGradient id="authArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#8a85ff" stop-opacity=".22" />
+                        <stop offset="1" stop-color="#8a85ff" stop-opacity="0" />
+                    </linearGradient>
+                    <radialGradient id="authGlow" cx=".85" cy=".1" r=".6">
+                        <stop offset="0" stop-color="#6f69f7" stop-opacity=".35" />
+                        <stop offset="1" stop-color="#6f69f7" stop-opacity="0" />
+                    </radialGradient>
+                </defs>
+                <rect width="600" height="900" fill="url(#authGlow)" />
+                <rect width="600" height="900" fill="url(#authDots)" />
+                <g fill="none" stroke="url(#authFlow)" stroke-width="1.2">
+                    <path d="M-40 560 C 120 500 220 620 360 540 S 560 420 660 470" />
+                    <path d="M-40 600 C 130 545 230 660 370 585 S 570 470 660 515" stroke-opacity=".7" />
+                    <path d="M-40 640 C 140 590 240 700 380 630 S 580 520 660 560" stroke-opacity=".45" />
+                </g>
+                <g fill="none" stroke="#ffffff" stroke-opacity=".07">
+                    <circle cx="560" cy="860" r="120" />
+                    <circle cx="560" cy="860" r="190" />
+                    <circle cx="560" cy="860" r="260" />
+                    <rect x="470" y="120" width="70" height="70" rx="14" transform="rotate(18 505 155)" />
+                </g>
+                <path d="M60 800 L150 760 L230 778 L320 700 L410 718 L520 620 L520 900 L60 900 Z" fill="url(#authArea)" />
+                <polyline points="60,800 150,760 230,778 320,700 410,718 520,620" fill="none" stroke="#a9a6ff" stroke-opacity=".6" stroke-width="2" stroke-linejoin="round" />
+                <g fill="#0b1130" stroke="#a9a6ff" stroke-opacity=".8" stroke-width="2">
+                    <circle cx="320" cy="700" r="4" />
+                    <circle cx="520" cy="620" r="5" />
+                </g>
+            </svg>
+
+            <div class="brand"><img src="~/favicon.svg" width="40" height="40" alt="" /><span>Taka<strong>Track</strong></span></div>
             <div>
-                <h2 class="auth-brand-title">Take control of where your money goes.</h2>
+                <h2 class="auth-brand-title">Track every taka. See where your money goes.</h2>
+                <p class="auth-brand-lead">A calm, private place to record spending, keep receipts and understand your monthly habits.</p>
                 <ul class="auth-features list-unstyled">
                     <li><i class="bi bi-graph-up-arrow"></i><span>See monthly trends and your top categories at a glance</span></li>
                     <li><i class="bi bi-receipt"></i><span>Keep receipts attached to every expense</span></li>
                     <li><i class="bi bi-shield-lock"></i><span>Your data is private to your account</span></li>
                 </ul>
             </div>
-            <p class="auth-brand-foot">&copy; @DateTime.Now.Year Personal Expense Tracker</p>
+            <p class="auth-brand-foot">&copy; @DateTime.Now.Year TakaTrack</p>
         </aside>
 
         <main class="auth-main" id="main-content">
             <div class="auth-topbar">
                 <a class="brand d-lg-none" asp-controller="Account" asp-action="Login">
-                    <img src="~/favicon.svg" width="32" height="32" alt="" /><span>Expense<strong>Tracker</strong></span>
+                    <img src="~/favicon.svg" width="32" height="32" alt="" /><span>Taka<strong>Track</strong></span>
                 </a>
                 <button type="button" class="btn btn-icon ms-auto" data-theme-toggle aria-label="Toggle dark mode">
                     <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>

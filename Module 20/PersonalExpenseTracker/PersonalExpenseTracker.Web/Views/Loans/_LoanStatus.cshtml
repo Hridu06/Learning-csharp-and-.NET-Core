@@ -1,0 +1,14 @@
+@model LoanDto
+@* Status pill shared by the loan list and details page. *@
+@switch (Model.Status)
+{
+    case LoanStatus.Settled:
+        <span class="status-pill status-pill-active"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Settled</span>
+        break;
+    case LoanStatus.Overdue:
+        <span class="status-pill status-pill-locked"><i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i> Overdue</span>
+        break;
+    default:
+        <span class="status-pill status-pill-open"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Active</span>
+        break;
+}

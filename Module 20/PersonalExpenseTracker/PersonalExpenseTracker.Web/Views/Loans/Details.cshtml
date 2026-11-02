@@ -1,0 +1,158 @@
+@model LoanDetailsViewModel
+@{
+    var loan = Model.Detail.Loan;
+    var owe = loan.Type == LoanType.Borrowed;
+    ViewData["Title"] = $"Loan · {loan.Person}";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Loans</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@loan.Person</li>
+            </ol>
+        </nav>
+        <div class="page-title-row">
+            <a class="btn-back" asp-action="Index" aria-label="Back to loans" data-bs-title="Back to loans"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+            <h1 class="page-title text-break">@loan.Person</h1>
+        </div>
+        <p class="page-subtitle">@(owe ? "You borrowed from" : "You lent to") @loan.Person on @ShortDate(loan.StartDate).</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@loan.Id"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i> Edit</a>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                data-delete-url="@Url.Action("Delete", new { id = loan.Id })" data-delete-name="this loan"
+                data-delete-message="The loan and all of its recorded payments will be permanently removed.">
+            <i class="bi bi-trash3 me-1" aria-hidden="true"></i> Delete
+        </button>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card stat-card-featured mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="stat-label">@(owe ? "You still owe" : "Still owed to you")</div>
+                    <partial name="_LoanStatus" model="loan" />
+                </div>
+                <p class="balance-value">@Money(loan.Remaining)</p>
+                <div class="budget-track budget-track-dark mt-3" aria-hidden="true"><span class="budget-fill loan-fill" style="width:@loan.PaidPercent.ToString("0.##", inv)%"></span></div>
+                <div class="balance-split">
+                    <div>
+                        <div class="label">Original amount</div>
+                        <div class="value">@Money(loan.Principal)</div>
+                    </div>
+                    <div>
+                        <div class="label">@(owe ? "Repaid" : "Received")</div>
+                        <div class="value">@Money(loan.Paid) <span class="small fw-normal">(@loan.PaidPercent.ToString("0")%)</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <dl class="detail-list mb-0">
+                    <dt>Type</dt><dd>@(owe ? "Borrowed (you owe)" : "Lent (owes you)")</dd>
+                    <dt>Date</dt><dd>@ShortDate(loan.StartDate)</dd>
+                    <dt>Due date</dt>
+                    <dd>
+                        @if (loan.DueDate is { } due)
+                        {
+                            @ShortDate(due)
+                            @if (loan.Status == LoanStatus.Overdue) { <span class="text-danger small ms-1">(overdue)</span> }
+                        }
+                        else
+                        {
+                            <span class="text-body-secondary">Not set</span>
+                        }
+                    </dd>
+                    <dt>Notes</dt><dd class="notes-text">@(loan.Notes ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7 d-flex flex-column gap-3">
+        @if (loan.Status != LoanStatus.Settled)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">@(owe ? "Record a repayment" : "Record money received")</h2>
+                    <p class="card-subtitle">Up to @Money(loan.Remaining) is left.</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddPayment" asp-route-id="@loan.Id" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" role="alert"></div>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label asp-for="Payment.Amount" class="form-label required"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">৳</span>
+                                    <input asp-for="Payment.Amount" class="form-control" type="number" min="0.01" step="0.01"
+                                           max="@loan.Remaining.ToString("0.##", inv)" placeholder="0.00" inputmode="decimal" />
+                                </div>
+                                <span asp-validation-for="Payment.Amount"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label asp-for="Payment.Date" class="form-label required"></label>
+                                <input asp-for="Payment.Date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                                <span asp-validation-for="Payment.Date"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Payment.Notes" class="form-label"></label> <span class="optional">(optional)</span>
+                                <input asp-for="Payment.Notes" class="form-control" maxlength="500" placeholder="e.g. bKash transfer, first installment" />
+                                <span asp-validation-for="Payment.Notes"></span>
+                            </div>
+                        </div>
+                        <div class="form-actions mt-3">
+                            <button type="button" class="btn btn-outline-secondary" data-fill-amount="@loan.Remaining.ToString("0.##", inv)">Pay full balance</button>
+                            <button type="submit" class="btn btn-primary" data-loading-text="Saving…"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>Record payment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <div class="card flex-grow-1">
+            <div class="card-header card-header-split">
+                <div>
+                    <h2 class="card-title">Payment history</h2>
+                    <p class="card-subtitle">@loan.PaymentCount payment@(loan.PaymentCount == 1 ? "" : "s"), newest first</p>
+                </div>
+            </div>
+            @if (Model.Detail.Payments.Count == 0)
+            {
+                <div class="empty-state py-4">
+                    <div class="empty-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
+                    <p class="text-body-secondary mb-0">No payments recorded yet.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="expense-list list-unstyled mb-0">
+                    @foreach (var payment in Model.Detail.Payments)
+                    {
+                        <li class="expense-item">
+                            <span class="cat-avatar cat-avatar-sm" style="--cat:@(owe ? "#EF4444" : "#16A34A")"><i class="bi bi-@(owe ? "arrow-up-right" : "arrow-down-left")" aria-hidden="true"></i></span>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold amount">@Money(payment.Amount)</div>
+                                <div class="small text-body-secondary text-truncate">@ShortDate(payment.Date)@(payment.Notes is null ? "" : $" · {payment.Notes}")</div>
+                            </div>
+                            <button type="button" class="btn btn-icon btn-icon-danger btn-sm" data-bs-title="Remove payment" aria-label="Remove payment of @Money(payment.Amount)"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                    data-delete-url="@Url.Action("DeletePayment", new { id = loan.Id, paymentId = payment.Id })"
+                                    data-delete-name="this payment" data-delete-message="The balance will go back up by @Money(payment.Amount).">
+                                <i class="bi bi-trash3" aria-hidden="true"></i>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

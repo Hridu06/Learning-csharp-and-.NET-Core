@@ -36,9 +36,14 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
         services.AddScoped<IExpenseRepository, ExpenseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IIncomeRepository, IncomeRepository>();
+        services.AddScoped<ILoanRepository, LoanRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IExpenseService, ExpenseService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IIncomeService, IncomeService>();
+        services.AddScoped<IBudgetService, BudgetService>();
+        services.AddScoped<ILoanService, LoanService>();
         services.AddScoped<ISummaryService, SummaryService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAdminService, AdminService>();

@@ -6,7 +6,7 @@ using PersonalExpenseTracker.Web.Models;
 
 namespace PersonalExpenseTracker.Web.Controllers;
 
-public class ExpensesController(IExpenseService expenses, ICategoryService categories) : Controller
+public class ExpensesController(IExpenseService expenses, ICategoryService categories, IBudgetService budgets) : Controller
 {
     public async Task<IActionResult> Index(ExpenseListQuery query, CancellationToken ct)
     {
@@ -32,6 +32,7 @@ public class ExpensesController(IExpenseService expenses, ICategoryService categ
             if (result.Succeeded)
             {
                 FlashSuccess(result, "Expense added successfully.");
+                await WarnIfOverBudgetAsync(model, ct);
                 return RedirectToAction(nameof(Index));
             }
             TempData["Error"] = "The expense could not be saved. Please correct the highlighted errors.";
@@ -68,6 +69,7 @@ public class ExpensesController(IExpenseService expenses, ICategoryService categ
             if (result.Succeeded)
             {
                 FlashSuccess(result, "Expense updated successfully.");
+                await WarnIfOverBudgetAsync(model, ct);
                 return RedirectToAction(nameof(Index));
             }
             TempData["Error"] = "The expense could not be saved. Please correct the highlighted errors.";
@@ -124,5 +126,13 @@ public class ExpensesController(IExpenseService expenses, ICategoryService categ
     {
         TempData["Success"] = message;
         if (result.Warning is not null) TempData["Warning"] = result.Warning;
+    }
+
+    // Appended to any storage warning so both reach the user in one toast.
+    private async Task WarnIfOverBudgetAsync(ExpenseFormViewModel model, CancellationToken ct)
+    {
+        var warning = await budgets.GetOverBudgetWarningAsync(model.CategoryId!.Value, model.Date!.Value, ct);
+        if (warning is null) return;
+        TempData["Warning"] = TempData["Warning"] is string existing ? $"{existing} {warning}" : warning;
     }
 }

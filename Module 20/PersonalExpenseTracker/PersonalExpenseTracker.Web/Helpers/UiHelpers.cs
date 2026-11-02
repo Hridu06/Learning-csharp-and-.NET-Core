@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using PersonalExpenseTracker.Data.Entities;
 using PersonalExpenseTracker.Service.Models;
 
 namespace PersonalExpenseTracker.Web.Helpers;
@@ -47,9 +48,23 @@ public static partial class UiHelpers
     private static TagBuilder Icon(string icon)
     {
         var i = new TagBuilder("i");
-        i.AddCssClass($"bi bi-{(CategoryAppearance.Icons.Contains(icon) ? icon : CategoryAppearance.DefaultIcon)}");
+        var known = CategoryAppearance.Icons.Contains(icon) || IncomeSources.All.Any(s => s.Icon == icon);
+        i.AddCssClass($"bi bi-{(known ? icon : CategoryAppearance.DefaultIcon)}");
         i.Attributes["aria-hidden"] = "true";
         return i;
+    }
+
+    // Income sources reuse the category badge/avatar look with their fixed colour and icon.
+    public static IHtmlContent SourceBadge(this IHtmlHelper html, IncomeSource source)
+    {
+        var info = IncomeSources.Get(source);
+        return html.CategoryBadge(info.Label, info.Color, info.Icon);
+    }
+
+    public static IHtmlContent SourceAvatar(this IHtmlHelper html, IncomeSource source, string? cssClass = null)
+    {
+        var info = IncomeSources.Get(source);
+        return html.CategoryAvatar(info.Color, info.Icon, cssClass);
     }
 
     // Colours end up inside a style attribute, so only plain hex values are allowed through.

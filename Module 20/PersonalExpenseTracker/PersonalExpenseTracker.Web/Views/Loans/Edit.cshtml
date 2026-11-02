@@ -1,0 +1,28 @@
+@model LoanFormViewModel
+@{ ViewData["Title"] = "Edit loan"; }
+<div class="form-page">
+    <div class="page-header">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Loans</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+            <div class="page-title-row">
+            <a class="btn-back" asp-action="Details" asp-route-id="@Model.Id" aria-label="Back to loan" data-bs-title="Back to loan"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+            <h1 class="page-title">Edit loan</h1>
+        </div>
+            <p class="page-subtitle">Update the details below.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                <partial name="_Form" model="Model" />
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

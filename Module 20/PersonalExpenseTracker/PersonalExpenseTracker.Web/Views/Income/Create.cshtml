@@ -1,0 +1,28 @@
+@model IncomeFormViewModel
+@{ ViewData["Title"] = "Add income"; }
+<div class="form-page">
+    <div class="page-header">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Income</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add</li>
+                </ol>
+            </nav>
+            <div class="page-title-row">
+            <a class="btn-back" asp-action="Index" aria-label="Back to income" data-bs-title="Back to income"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+            <h1 class="page-title">Add income</h1>
+        </div>
+            <p class="page-subtitle">Record money you received, like your salary or a freelance payment.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                <partial name="_Form" model="Model" />
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

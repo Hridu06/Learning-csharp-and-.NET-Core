@@ -11,7 +11,17 @@ public class CategoryRepository(ExpenseTrackerDbContext context) : RepositoryBas
     public async Task<IReadOnlyList<CategoryAggregate>> GetAllWithTotalsAsync(string userId, CancellationToken ct = default) =>
         await Context.ExpenseCategories.AsNoTracking().Where(c => c.UserId == userId).OrderBy(c => c.Name)
             .Select(c => new CategoryAggregate(c.Id, c.Name, c.Description, c.Color, c.Icon, c.Expenses.Count,
-                c.Expenses.Sum(e => (decimal?)e.Amount) ?? 0m)).ToListAsync(ct);
+                c.Expenses.Sum(e => (decimal?)e.Amount) ?? 0m, c.MonthlyBudget)).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<CategoryAggregate>> GetTotalsForPeriodAsync(string userId, DateTime from, DateTime until,
+        CancellationToken ct = default) =>
+        await Context.Expenses.AsNoTracking()
+            .Where(e => e.UserId == userId && e.Date >= from && e.Date < until)
+            .GroupBy(e => new { e.CategoryId, e.Category.Name, e.Category.Description, e.Category.Color, e.Category.Icon })
+            .OrderByDescending(g => g.Sum(e => e.Amount))
+            .Select(g => new CategoryAggregate(g.Key.CategoryId, g.Key.Name, g.Key.Description, g.Key.Color, g.Key.Icon,
+                g.Count(), g.Sum(e => e.Amount)))
+            .ToListAsync(ct);
 
     public Task<ExpenseCategory?> GetByIdAsync(string userId, int id, CancellationToken ct = default) =>
         Context.ExpenseCategories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId, ct);
@@ -22,6 +32,10 @@ public class CategoryRepository(ExpenseTrackerDbContext context) : RepositoryBas
     public Task<bool> NameExistsAsync(string userId, string name, int? exceptId = null, CancellationToken ct = default) =>
         Context.ExpenseCategories.AnyAsync(c => c.UserId == userId && c.Name == name
             && (!exceptId.HasValue || c.Id != exceptId.Value), ct);
+
+    public async Task<bool> SetBudgetAsync(string userId, int id, decimal? amount, CancellationToken ct = default) =>
+        await Context.ExpenseCategories.Where(c => c.Id == id && c.UserId == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.MonthlyBudget, amount), ct) > 0;
 
     public Task<bool> AnyAsync(string userId, CancellationToken ct = default) =>
         Context.ExpenseCategories.AnyAsync(c => c.UserId == userId, ct);

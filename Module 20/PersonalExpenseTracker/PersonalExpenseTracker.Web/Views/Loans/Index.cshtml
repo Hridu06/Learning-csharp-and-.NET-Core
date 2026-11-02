@@ -1,0 +1,144 @@
+@model LoansIndexViewModel
+@{
+    ViewData["Title"] = "Loans";
+    var summary = Model.Summary;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var tabs = new[]
+    {
+        (Key: "active", Label: "Active"),
+        (Key: "borrowed", Label: "I owe"),
+        (Key: "lent", Label: "Owed to me"),
+        (Key: "settled", Label: $"Settled ({Model.SettledCount})")
+    };
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Loans</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">Loans</h1>
+        <p class="page-subtitle">Money you've borrowed or lent, and what's still left to settle.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add loan</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-icon loan-icon-owe"><i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                    <span class="stat-label">You owe</span>
+                </div>
+                <div class="stat-value">@Money(summary.YouOwe)</div>
+                <div class="stat-foot text-body-secondary">Still to repay on money you borrowed</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-icon stat-icon-success"><i class="bi bi-arrow-down-left" aria-hidden="true"></i></span>
+                    <span class="stat-label">Owed to you</span>
+                </div>
+                <div class="stat-value">@Money(summary.OwedToYou)</div>
+                <div class="stat-foot text-body-secondary">Still to collect on money you lent</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-head">
+                    <span class="stat-icon @(summary.OverdueCount > 0 ? "loan-icon-owe" : "stat-icon-primary")"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
+                    <span class="stat-label">Next due</span>
+                </div>
+                @if (summary.NextDue is { } next)
+                {
+                    <div class="stat-value text-truncate">@ShortDate(next.DueDate!.Value)</div>
+                    <div class="stat-foot text-body-secondary">
+                        @next.Person &middot; @Money(next.Remaining) @(next.Type == LoanType.Borrowed ? "to repay" : "to collect")
+                        @if (summary.OverdueCount > 0)
+                        {
+                            <span class="trend trend-up">@summary.OverdueCount overdue</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="stat-value text-body-tertiary">—</div>
+                    <div class="stat-foot text-body-secondary">No due dates set</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<nav class="loan-tabs mb-3" aria-label="Loan filters">
+    @foreach (var tab in tabs)
+    {
+        <a class="loan-tab @(Model.Tab == tab.Key ? "active" : "")" aria-current="@(Model.Tab == tab.Key ? "page" : null)"
+           asp-action="Index" asp-route-tab="@(tab.Key == "active" ? null : tab.Key)">@tab.Label</a>
+    }
+</nav>
+
+@if (Model.Loans.Count == 0)
+{
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-arrow-left-right" aria-hidden="true"></i></div>
+            <h2 class="h5">@(Model.Tab == "settled" ? "No settled loans yet" : "No loans here")</h2>
+            <p class="text-body-secondary">Record money you've borrowed or lent to keep track of repayments.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a class="btn btn-outline-secondary" asp-action="Create" asp-route-type="Lent">I lent money</a>
+                <a class="btn btn-primary" asp-action="Create" asp-route-type="Borrowed">I borrowed money</a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var loan in Model.Loans)
+        {
+            var owe = loan.Type == LoanType.Borrowed;
+            <div class="col-md-6 col-xl-4">
+                <a class="card loan-card h-100 @(owe ? "loan-owe" : "loan-lent")" asp-action="Details" asp-route-id="@loan.Id"
+                   aria-label="@(owe ? "You owe" : "Owes you") @loan.Person @Money(loan.Remaining). View details">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="user-avatar user-avatar-md loan-avatar" aria-hidden="true">@Initials(loan.Person)</span>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate">@loan.Person</div>
+                                <div class="small loan-type">@(owe ? "You owe" : "Owes you")</div>
+                            </div>
+                            <partial name="_LoanStatus" model="loan" />
+                        </div>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-end mb-2">
+                                <div>
+                                    <div class="stat-caption">Left</div>
+                                    <div class="fs-5 fw-bold amount">@Money(loan.Remaining)</div>
+                                </div>
+                                <div class="text-end small text-body-secondary">of @Money(loan.Principal)</div>
+                            </div>
+                            <div class="budget-track" aria-hidden="true"><span class="budget-fill loan-fill" style="width:@loan.PaidPercent.ToString("0.##", inv)%"></span></div>
+                            <div class="d-flex justify-content-between mt-2 small text-body-secondary">
+                                <span>@loan.PaidPercent.ToString("0")% @(owe ? "repaid" : "received")</span>
+                                <span>@(loan.DueDate is { } due ? $"Due {ShortDate(due)}" : "No due date")</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+<p class="text-body-secondary small mt-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Loans are kept separate from income and expenses: borrowing isn't income, and repaying isn't spending.</p>

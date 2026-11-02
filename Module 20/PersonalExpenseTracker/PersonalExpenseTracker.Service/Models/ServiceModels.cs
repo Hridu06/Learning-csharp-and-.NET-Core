@@ -17,10 +17,22 @@ public record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, decimal Tot
     public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 }
 
-public record MonthTotalDto(DateTime Month, decimal Total);
+// Total is spending; Income is money received in the same month.
+public record MonthTotalDto(DateTime Month, decimal Total, decimal Income);
 public record SummaryDto(DateTime Month, decimal CurrentMonthTotal, decimal PreviousMonthTotal, decimal TodayTotal,
-    IReadOnlyList<CategoryDto> Categories, IReadOnlyList<ExpenseDto> RecentExpenses, IReadOnlyList<MonthTotalDto> MonthlyTotals)
+    IReadOnlyList<CategoryDto> Categories, IReadOnlyList<ExpenseDto> RecentExpenses, IReadOnlyList<MonthTotalDto> MonthlyTotals,
+    IReadOnlyList<CategoryDto> CurrentMonthCategories, decimal CurrentMonthIncome, decimal PreviousMonthIncome, decimal AllTimeIncome,
+    BudgetOverviewDto Budget, LoanSummaryDto Loans, DateTime CurrentMonth, int DayOfMonth)
 {
+    // Month is the month being shown; CurrentMonth is today's month. DayOfMonth is today in the current
+    // month and the last day for a past (complete) month.
+    public bool IsCurrentMonth => Month == CurrentMonth;
+    public int DaysInMonth => DateTime.DaysInMonth(Month.Year, Month.Month);
+
+    public decimal NetThisMonth => CurrentMonthIncome - CurrentMonthTotal;
+    // Share of this month's income that was not spent; null without income to compare against.
+    public decimal? SavingsRate => CurrentMonthIncome == 0 ? null : NetThisMonth / CurrentMonthIncome * 100;
+
     public decimal AllTimeTotal => Categories.Sum(c => c.Total);
     public int ExpenseCount => Categories.Sum(c => c.ExpenseCount);
     public CategoryDto? TopCategory => Categories.Where(c => c.Total > 0).MaxBy(c => c.Total);

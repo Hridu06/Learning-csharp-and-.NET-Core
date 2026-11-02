@@ -22,6 +22,35 @@
         new bootstrap.Tooltip(el);
     });
 
+    // Desktop sidebar: expanded (labels) or collapsed (icon rail). The initial class is set in _Layout.cshtml.
+    var root = document.documentElement;
+    var sidebarToggle = document.querySelector('[data-sidebar-toggle]');
+    function syncSidebarToggle() {
+        if (!sidebarToggle) return;
+        var collapsed = root.classList.contains('sidebar-collapsed');
+        sidebarToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        sidebarToggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    }
+    if (sidebarToggle) {
+        syncSidebarToggle();
+        sidebarToggle.addEventListener('click', function () {
+            var collapsed = root.classList.toggle('sidebar-collapsed');
+            try { localStorage.setItem('sidebar', collapsed ? 'collapsed' : 'expanded'); } catch (e) { /* storage unavailable */ }
+            syncSidebarToggle();
+            document.querySelectorAll('.app-sidebar [data-bs-title]').forEach(function (el) {
+                var tip = bootstrap.Tooltip.getInstance(el);
+                if (tip) tip.hide();
+            });
+        });
+    }
+    // Sidebar tooltips only matter on the icon rail, where the labels are hidden.
+    document.querySelectorAll('.app-sidebar [data-bs-title]').forEach(function (el) {
+        el.addEventListener('show.bs.tooltip', function (event) {
+            var rail = root.classList.contains('sidebar-collapsed') && window.matchMedia('(min-width: 992px)').matches;
+            if (!rail) event.preventDefault();
+        });
+    });
+
     // Shared delete modal: copy the trigger's URL and labels into the form.
     var deleteModal = document.getElementById('deleteModal');
     if (deleteModal) {
@@ -205,6 +234,26 @@
             emailPassword.classList.toggle('d-none', !changed);
         });
     }
+
+    // Inputs marked data-autosubmit (the dashboard month picker) reload the page as soon as they change.
+    document.querySelectorAll('[data-autosubmit]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            if (input.value) input.form.submit();
+        });
+        // Open the native picker on any click, not just on its small calendar icon.
+        input.addEventListener('click', function () {
+            try { if (input.showPicker) input.showPicker(); } catch (e) { /* not supported for this input */ }
+        });
+    });
+
+    // "Pay full balance" on a loan copies the remaining amount into the payment field.
+    document.querySelectorAll('[data-fill-amount]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var input = button.closest('form').querySelector('input[type="number"]');
+            input.value = button.getAttribute('data-fill-amount');
+            input.focus();
+        });
+    });
 
     // Re-open a modal after a failed post (e.g. wrong password on delete account).
     // Razor always renders data-* attributes, so check the value rather than its presence.

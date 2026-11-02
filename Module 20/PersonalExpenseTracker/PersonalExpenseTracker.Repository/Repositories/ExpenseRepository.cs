@@ -53,8 +53,10 @@ public class ExpenseRepository(ExpenseTrackerDbContext context) : RepositoryBase
     public Task<Expense?> GetByIdAsync(string userId, int id, CancellationToken ct = default) =>
         Context.Expenses.AsNoTracking().Include(e => e.Category).FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId, ct);
 
-    public async Task<IReadOnlyList<Expense>> GetRecentAsync(string userId, int count, CancellationToken ct = default) =>
-        await Context.Expenses.AsNoTracking().Include(e => e.Category).Where(e => e.UserId == userId)
+    public async Task<IReadOnlyList<Expense>> GetRecentAsync(string userId, int count, DateTime? from = null, DateTime? until = null,
+        CancellationToken ct = default) =>
+        await Context.Expenses.AsNoTracking().Include(e => e.Category)
+            .Where(e => e.UserId == userId && (!from.HasValue || e.Date >= from.Value) && (!until.HasValue || e.Date < until.Value))
             .OrderByDescending(e => e.Date).ThenByDescending(e => e.Id).Take(count).ToListAsync(ct);
 
     public async Task<decimal> GetTotalAsync(string userId, DateTime from, DateTime until, CancellationToken ct = default) =>

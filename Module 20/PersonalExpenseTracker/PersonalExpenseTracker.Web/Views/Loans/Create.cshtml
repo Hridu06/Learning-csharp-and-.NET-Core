@@ -1,0 +1,28 @@
+@model LoanFormViewModel
+@{ ViewData["Title"] = "Add loan"; }
+<div class="form-page">
+    <div class="page-header">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">Loans</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add</li>
+                </ol>
+            </nav>
+            <div class="page-title-row">
+            <a class="btn-back" asp-action="Index" aria-label="Back to loans" data-bs-title="Back to loans"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+            <h1 class="page-title">Add loan</h1>
+        </div>
+            <p class="page-subtitle">Record money you borrowed or lent. Add repayments later from the loan page.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                <partial name="_Form" model="Model" />
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,224 @@
+@model IncomeIndexViewModel
+@{
+    ViewData["Title"] = "Income";
+    var query = Model.Query;
+    var result = Model.Result;
+    var firstItem = result.TotalCount == 0 ? 0 : (result.Page - 1) * result.PageSize + 1;
+    var lastItem = firstItem == 0 ? 0 : firstItem + result.Items.Count - 1;
+    const string deleteMessage = "This income entry will be permanently removed.";
+
+    // Page numbers to show: first, last and two either side of the current page; null marks a gap.
+    var pages = new List<int?>();
+    for (var p = 1; p <= result.TotalPages; p++)
+    {
+        if (p == 1 || p == result.TotalPages || Math.Abs(p - result.Page) <= 2) pages.Add(p);
+        else if (pages.LastOrDefault() is not null) pages.Add(null);
+    }
+
+    async Task SortHeader(string key, string label, string? css = null)
+    {
+        var active = query.SortKey == key;
+        var nextDescending = active ? !query.Descending : IncomeListQuery.DefaultDescending(key);
+        var icon = !active ? "chevron-expand" : query.Descending ? "arrow-down" : "arrow-up";
+        <th scope="col" class="@css" aria-sort="@(active ? (query.Descending ? "descending" : "ascending") : "none")">
+            <a class="sort-link @(active ? "active" : "")" asp-action="Index" asp-all-route-data="query.RouteData(key, nextDescending, 1)">
+                @label <i class="bi bi-@icon" aria-hidden="true"></i>
+            </a>
+        </th>
+    }
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Income</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">Income</h1>
+        <p class="page-subtitle">Salary, freelance work and everything else that comes in.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add income</a>
+    </div>
+</div>
+
+<form class="card filter-card mb-4" method="get" asp-action="Index" role="search" aria-label="Filter income">
+    <input type="hidden" name="sort" value="@query.SortKey" />
+    <input type="hidden" name="dir" value="@(query.Descending ? "desc" : "asc")" />
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg">
+                <label class="form-label small" for="filter-q">Search</label>
+                <div class="input-icon">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="filter-q" name="q" value="@query.Q" class="form-control" type="search" placeholder="Search title or notes…" maxlength="100" />
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-2">
+                <label class="form-label small" for="filter-source">Source</label>
+                <select id="filter-source" name="source" class="form-select">
+                    <option value="">All sources</option>
+                    @foreach (var source in IncomeSources.All)
+                    {
+                        <option value="@source.Source" selected="@(query.Source == source.Source)">@source.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+                <label class="form-label small" for="filter-from">From</label>
+                <input id="filter-from" name="from" type="date" class="form-control" value="@query.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+                <label class="form-label small" for="filter-to">To</label>
+                <input id="filter-to" name="to" type="date" class="form-control" value="@query.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-lg-auto">
+                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel me-1" aria-hidden="true"></i> Apply</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header card-header-split">
+        <div>
+            <span class="fw-semibold">@(query.HasFilters ? "Filtered results" : "All income")</span>
+            <span class="count-badge ms-1">@result.TotalCount</span>
+            @if (query.HasFilters)
+            {
+                <a class="small ms-2" asp-action="Index"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Clear filters</a>
+            }
+        </div>
+        <div class="text-body-secondary small">Total <strong class="income-amount fs-6 ms-1">@Money(result.TotalAmount)</strong></div>
+    </div>
+
+    @if (result.TotalCount == 0)
+    {
+        <div class="empty-state">
+            @if (query.HasFilters)
+            {
+                <div class="empty-icon"><i class="bi bi-search" aria-hidden="true"></i></div>
+                <h2 class="h5">No matching income</h2>
+                <p class="text-body-secondary">Try a different search term, source or date range.</p>
+                <a class="btn btn-outline-secondary" asp-action="Index">Clear filters</a>
+            }
+            else
+            {
+                <div class="empty-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
+                <h2 class="h5">No income recorded yet</h2>
+                <p class="text-body-secondary">Add your salary or other income to see how much you save each month.</p>
+                <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add your first income</a>
+            }
+        </div>
+    }
+    else
+    {
+        @* Desktop and tablet: table *@
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        @{ await SortHeader("title", "Income"); }
+                        @{ await SortHeader("source", "Source"); }
+                        @{ await SortHeader("date", "Date"); }
+                        @{ await SortHeader("amount", "Amount", "text-end"); }
+                        <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var income in result.Items)
+                {
+                    <tr>
+                        <td class="text-break">
+                            <div class="fw-semibold">@income.Title</div>
+                            @if (income.Notes is not null)
+                            {
+                                <div class="small text-body-secondary text-truncate expense-notes">@income.Notes</div>
+                            }
+                        </td>
+                        <td>@Html.SourceBadge(income.Source)</td>
+                        <td class="text-nowrap text-body-secondary">@ShortDate(income.Date)</td>
+                        <td class="text-end text-nowrap amount income-amount">+@Money(income.Amount)</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-icon btn-sm" asp-action="Edit" asp-route-id="@income.Id" data-bs-title="Edit" aria-label="Edit @income.Title">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                            </a>
+                            <button type="button" class="btn btn-icon btn-icon-danger btn-sm" data-bs-title="Delete" aria-label="Delete @income.Title"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                    data-delete-url="@Url.Action("Delete", "Income", new { id = income.Id })"
+                                    data-delete-name="@income.Title" data-delete-message="@deleteMessage">
+                                <i class="bi bi-trash3" aria-hidden="true"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        @* Phones: stacked cards *@
+        <ul class="expense-list list-unstyled mb-0 d-md-none">
+        @foreach (var income in result.Items)
+        {
+            <li class="expense-item">
+                @Html.SourceAvatar(income.Source)
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-semibold text-truncate">@income.Title</div>
+                    <div class="small text-body-secondary text-truncate">@IncomeSources.Get(income.Source).Label &middot; @ShortDate(income.Date)</div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-semibold text-nowrap amount income-amount">+@Money(income.Amount)</div>
+                    <div class="dropdown">
+                        <button class="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions for @income.Title">
+                            <i class="bi bi-three-dots" aria-hidden="true"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@income.Id"><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Edit</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-delete-url="@Url.Action("Delete", "Income", new { id = income.Id })"
+                                        data-delete-name="@income.Title" data-delete-message="@deleteMessage">
+                                    <i class="bi bi-trash3 me-2" aria-hidden="true"></i>Delete
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </li>
+        }
+        </ul>
+
+        <div class="card-footer card-header-split">
+            <span class="small text-body-secondary">Showing <strong>@firstItem–@lastItem</strong> of <strong>@result.TotalCount</strong></span>
+            @if (result.TotalPages > 1)
+            {
+                <nav aria-label="Income pages">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(result.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: result.Page - 1)" aria-label="Previous page"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                        </li>
+                        @foreach (var p in pages)
+                        {
+                            if (p is null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == result.Page ? "active" : "")">
+                                    <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: p)" aria-current="@(p == result.Page ? "page" : null)">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(result.Page == result.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-all-route-data="query.RouteData(page: result.Page + 1)" aria-label="Next page"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    }
+</div>

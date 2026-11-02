@@ -3,7 +3,10 @@
     var navItems = new[]
     {
         (Controller: "Summary", Label: "Dashboard", Icon: "grid-1x2"),
+        (Controller: "Income", Label: "Income", Icon: "cash-coin"),
         (Controller: "Expenses", Label: "Expenses", Icon: "receipt"),
+        (Controller: "Budgets", Label: "Budgets", Icon: "bullseye"),
+        (Controller: "Loans", Label: "Loans", Icon: "arrow-left-right"),
         (Controller: "Categories", Label: "Categories", Icon: "tags")
     };
     var fullName = User.FindFirstValue(AppClaims.FullName) ?? User.Identity?.Name ?? "Account";
@@ -17,8 +20,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Track your personal expenses, organize categories and keep receipts in one place." />
-    <title>@ViewData["Title"] · Expense Tracker</title>
+    <meta name="description" content="TakaTrack: track every taka. Record expenses, organize categories and keep receipts in one place." />
+    <title>@ViewData["Title"] · TakaTrack</title>
     @* Apply the saved theme before the page paints to avoid a light/dark flash. *@
     <script>
         (function () {
@@ -28,6 +31,10 @@
                 theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             }
             document.documentElement.setAttribute('data-bs-theme', theme);
+            // Desktop sidebar starts as the icon rail unless the user expanded it before.
+            var sidebar;
+            try { sidebar = localStorage.getItem('sidebar'); } catch (e) { }
+            if (sidebar !== 'expanded') document.documentElement.classList.add('sidebar-collapsed');
         })();
     </script>
     <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
@@ -42,12 +49,16 @@
 <body>
     <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
 
+    @* Desktop: a slim icon rail with tooltips. Phones/tablets: the same markup becomes a labelled offcanvas menu. *@
     <aside class="app-sidebar offcanvas-lg offcanvas-start" id="sidebar" tabindex="-1" aria-label="Main navigation">
+        <button type="button" class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Expand sidebar">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
         <div class="sidebar-inner">
             <div class="sidebar-brand">
-                <a class="brand" asp-controller="Summary" asp-action="Index">
-                    <img src="~/favicon.svg" width="36" height="36" alt="" />
-                    <span>Expense<strong>Tracker</strong></span>
+                <a class="brand" asp-controller="Summary" asp-action="Index" aria-label="TakaTrack home">
+                    <img src="~/favicon.svg" width="40" height="40" alt="" />
+                    <span>Taka<strong>Track</strong></span>
                 </a>
                 <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
                         data-bs-target="#sidebar" aria-label="Close menu"></button>
@@ -59,34 +70,36 @@
                 {
                     var active = controller == item.Controller;
                     <a class="sidebar-link @(active ? "active" : "")" aria-current="@(active ? "page" : null)"
-                       asp-controller="@item.Controller" asp-action="Index">
+                       asp-controller="@item.Controller" asp-action="Index" data-bs-title="@item.Label" data-bs-placement="right">
                         <i class="bi bi-@item.Icon" aria-hidden="true"></i><span>@item.Label</span>
                     </a>
                 }
 
-                <div class="sidebar-label mt-3">Account</div>
+                <div class="sidebar-label">Account</div>
                 <a class="sidebar-link @(controller == "Profile" ? "active" : "")" aria-current="@(controller == "Profile" ? "page" : null)"
-                   asp-controller="Profile" asp-action="Index">
+                   asp-controller="Profile" asp-action="Index" data-bs-title="My profile" data-bs-placement="right">
                     <i class="bi bi-person-circle" aria-hidden="true"></i><span>My profile</span>
                 </a>
                 @if (isAdmin)
                 {
                     <a class="sidebar-link @(controller == "Admin" ? "active" : "")" aria-current="@(controller == "Admin" ? "page" : null)"
-                       asp-controller="Admin" asp-action="Index">
+                       asp-controller="Admin" asp-action="Index" data-bs-title="User management" data-bs-placement="right">
                         <i class="bi bi-shield-lock" aria-hidden="true"></i><span>User management</span>
                     </a>
                 }
             </nav>
 
             <div class="sidebar-footer">
-                <button type="button" class="sidebar-link w-100" data-theme-toggle>
+                <button type="button" class="sidebar-link" data-theme-toggle data-bs-title="Switch theme" data-bs-placement="right">
                     <i class="bi bi-moon-stars theme-icon-light" aria-hidden="true"></i>
                     <i class="bi bi-sun theme-icon-dark" aria-hidden="true"></i>
                     <span class="theme-icon-light">Dark mode</span><span class="theme-icon-dark">Light mode</span>
                 </button>
 
-                <div class="dropup mt-3">
-                    <button class="user-card" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu for @fullName">
+                @* Fixed positioning lets the menu escape the sidebar's scroll container on the narrow rail. *@
+                <div class="dropup mt-2">
+                    <button class="user-card" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu for @fullName"
+                            data-bs-popper-config='{"strategy":"fixed"}'>
                         <partial name="_Avatar" model="avatar" />
                         <span class="user-card-text">
                             <span class="user-card-name">@fullName</span>
@@ -94,7 +107,12 @@
                         </span>
                         <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
                     </button>
-                    <ul class="dropdown-menu w-100">
+                    <ul class="dropdown-menu user-menu">
+                        <li class="user-menu-head">
+                            <div class="fw-semibold text-truncate">@fullName</div>
+                            <div class="small text-body-secondary text-truncate">@email</div>
+                        </li>
+                        <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index"><i class="bi bi-person me-2" aria-hidden="true"></i>My profile</a></li>
                         <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-fragment="password"><i class="bi bi-key me-2" aria-hidden="true"></i>Change password</a></li>
                         <li><hr class="dropdown-divider" /></li>
@@ -117,7 +135,7 @@
             </button>
             <a class="brand" asp-controller="Summary" asp-action="Index">
                 <img src="~/favicon.svg" width="28" height="28" alt="" />
-                <span>Expense<strong>Tracker</strong></span>
+                <span>Taka<strong>Track</strong></span>
             </a>
             <div class="d-flex align-items-center gap-1">
                 <button type="button" class="btn btn-icon" data-theme-toggle aria-label="Toggle dark mode">
@@ -133,7 +151,7 @@
         </main>
 
         <footer class="app-footer">
-            <span>&copy; @DateTime.Now.Year Personal Expense Tracker</span>
+            <span>&copy; @DateTime.Now.Year TakaTrack</span>
             <span>All amounts in BDT (৳)</span>
         </footer>
     </div>

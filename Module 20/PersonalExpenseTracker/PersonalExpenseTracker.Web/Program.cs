@@ -25,7 +25,7 @@ builder.Services.AddExpenseTracker(connectionString,
     Path.Combine(dataRoot, "receipts"), Path.Combine(dataRoot, "avatars"));
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.Name = "ExpenseTracker.Auth";
+    options.Cookie.Name = "TakaTrack.Auth";
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";

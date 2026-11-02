@@ -12,7 +12,10 @@
                 <li class="breadcrumb-item active" aria-current="page">Receipt</li>
             </ol>
         </nav>
-        <h1 class="page-title text-break">@Model.Title</h1>
+        <div class="page-title-row">
+            <a class="btn-back" asp-action="Index" aria-label="Back to expenses" data-bs-title="Back to expenses"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
+            <h1 class="page-title text-break">@Model.Title</h1>
+        </div>
         <p class="page-subtitle">Receipt attached to this expense.</p>
     </div>
     <div class="page-actions">

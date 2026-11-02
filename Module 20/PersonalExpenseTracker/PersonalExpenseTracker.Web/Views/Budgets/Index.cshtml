@@ -1,0 +1,169 @@
+@model BudgetOverviewDto
+@{
+    ViewData["Title"] = "Budgets";
+    var month = Model.Month.ToString("MMMM");
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    string Pct(decimal? value) => Math.Min(100, value ?? 0).ToString("0.##", inv);
+    string Amount(decimal? value) => value?.ToString("0.##", inv) ?? "";
+    string StatusClass(BudgetStatus status) => status switch
+    {
+        BudgetStatus.Over => "budget-over",
+        BudgetStatus.Warning => "budget-warn",
+        BudgetStatus.OnTrack => "budget-ok",
+        _ => "budget-none"
+    };
+    string StatusText(BudgetStatus status) => status switch
+    {
+        BudgetStatus.Over => "Over budget",
+        BudgetStatus.Warning => "Almost there",
+        BudgetStatus.OnTrack => "On track",
+        _ => "No limit"
+    };
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Summary" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Budgets</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">Budgets</h1>
+        <p class="page-subtitle">Set a monthly limit for each category. Limits repeat every month.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card h-100 @StatusClass(Model.Status)">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <div class="stat-label">@month budget</div>
+                        @if (Model.HasBudget)
+                        {
+                            <div class="balance-value text-body">@Model.UsedPercent!.Value.ToString("0")% <span class="fs-6 fw-semibold text-body-secondary">used</span></div>
+                        }
+                        else
+                        {
+                            <div class="balance-value text-body-tertiary">—</div>
+                        }
+                    </div>
+                    @if (Model.HasBudget)
+                    {
+                        <span class="budget-pill">
+                            @StatusText(Model.Status)@(Model.AheadOfPace ? " · ahead of pace" : "")
+                        </span>
+                    }
+                </div>
+                @if (Model.HasBudget)
+                {
+                    <p class="mb-2">
+                        <strong class="amount">@Money(Model.EffectiveSpent)</strong> <span class="text-body-secondary">of</span> <strong class="amount">@Money(Model.EffectiveLimit!.Value)</strong>
+                        <span class="text-body-secondary">&middot; @(Model.Remaining < 0 ? $"{Money(-Model.Remaining!.Value)} over" : $"{Money(Model.Remaining!.Value)} left")</span>
+                    </p>
+                    @* The tick marks how far through the month we are, so usage can be read against time. *@
+                    <div class="budget-track budget-track-lg" role="progressbar" aria-label="Budget used" aria-valuenow="@Math.Round(Model.UsedPercent!.Value)" aria-valuemin="0" aria-valuemax="100">
+                        <span class="budget-fill" style="width:@Pct(Model.UsedPercent)%"></span>
+                        <span class="budget-pace" style="left:@Pct(Model.TimeElapsedPercent)%" aria-hidden="true"></span>
+                    </div>
+                    <p class="compare-note mt-2 mb-0">
+                        Day @Model.Day of @Model.DaysInMonth. The marker shows how much of the month has passed (@Model.TimeElapsedPercent.ToString("0")%).
+                        @(Model.OverallLimit.HasValue ? "Based on your overall budget." : "Based on the total of your category limits.")
+                    </p>
+                }
+                else
+                {
+                    <p class="text-body-secondary mb-0">No budget yet. Set an overall limit, or add limits to the categories below.</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="card-title">Overall monthly budget</h2>
+                <p class="card-subtitle mb-3">Optional. A cap on all spending in a month, whatever the category.</p>
+                <form asp-action="SetOverall" method="post" class="d-flex gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input name="amount" type="number" min="0.01" step="0.01" class="form-control" placeholder="e.g. 30000"
+                               value="@Amount(Model.OverallLimit)" aria-label="Overall monthly budget" />
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-loading-text="Saving…">Save</button>
+                </form>
+                @if (Model.OverallLimit.HasValue)
+                {
+                    <form asp-action="SetOverall" method="post" class="mt-2">
+                        <input type="hidden" name="amount" value="" />
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">Remove overall budget</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header card-header-split">
+        <div>
+            <h2 class="card-title">Category budgets</h2>
+            <p class="card-subtitle">Spending in @month against each category's limit. Leave a limit empty to remove it.</p>
+        </div>
+    </div>
+    @if (Model.Lines.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-tags" aria-hidden="true"></i></div>
+            <h3 class="h6">No categories yet</h3>
+            <p class="text-body-secondary">Create a category first, then give it a monthly limit.</p>
+            <a class="btn btn-primary" asp-controller="Categories" asp-action="Create">Add category</a>
+        </div>
+    }
+    else
+    {
+        <ul class="budget-list list-unstyled mb-0">
+            @foreach (var line in Model.Lines)
+            {
+                <li class="budget-row @StatusClass(line.Status)" id="category-@line.CategoryId">
+                    <div class="budget-row-main">
+                        @Html.CategoryAvatar(line.Color, line.Icon)
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <span class="fw-semibold text-truncate">@line.Name</span>
+                                <span class="small">
+                                    @if (line.Limit.HasValue)
+                                    {
+                                        <strong class="amount">@Money(line.Spent)</strong> <span class="text-body-secondary">of @Money(line.Limit.Value)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-body-secondary">@Money(line.Spent) spent</span>
+                                    }
+                                </span>
+                            </div>
+                            @if (line.Limit.HasValue)
+                            {
+                                <div class="budget-track mt-2" aria-hidden="true"><span class="budget-fill" style="width:@Pct(line.Percent)%"></span></div>
+                                <div class="d-flex justify-content-between mt-1 small">
+                                    <span class="budget-status-text">@StatusText(line.Status) &middot; @line.Percent!.Value.ToString("0")%</span>
+                                    <span class="text-body-secondary">@(line.Remaining < 0 ? $"{Money(-line.Remaining!.Value)} over" : $"{Money(line.Remaining!.Value)} left")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <form asp-action="SetCategory" method="post" class="budget-form">
+                        <input type="hidden" name="categoryId" value="@line.CategoryId" />
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">৳</span>
+                            <input name="amount" type="number" min="0.01" step="0.01" class="form-control" placeholder="No limit"
+                                   value="@Amount(line.Limit)" aria-label="Monthly limit for @line.Name" />
+                            <button type="submit" class="btn btn-outline-secondary" data-loading-text="…">Save</button>
+                        </div>
+                    </form>
+                </li>
+            }
+        </ul>
+    }
+</div>

@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sign in to TakaTrack. Track your spending, plan your budget, and grow your savings." />
+    <title>@ViewData["Title"] · TakaTrack</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/fonts/inter.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body class="login-page">
+    <a class="visually-hidden-focusable login-skip" href="#main-content">Skip to sign in</a>
+    <div class="login-shell">
+        <aside class="login-story" aria-label="About TakaTrack">
+            <a class="login-brand login-brand-main" asp-controller="Account" asp-action="Login" aria-label="TakaTrack home">
+                <img src="~/favicon.svg" width="64" height="64" alt="" />
+                <span>Taka<strong>Track</strong></span>
+            </a>
+            <div class="login-story-copy">
+                <p class="login-eyebrow"><i class="bi bi-bar-chart-fill" aria-hidden="true"></i> Personal Expense Tracker</p>
+                <h2>Track Your<br />Spending,<br />Grow Your<br /><span>Savings.</span></h2>
+                <p class="login-story-lead">Record expenses, plan your budget, and build better saving habits — all in one place.</p>
+                <ul class="login-benefits">
+                    <li><i class="bi bi-bar-chart-fill" aria-hidden="true"></i><span>Track Income &amp; Expenses</span></li>
+                    <li><i class="bi bi-bullseye" aria-hidden="true"></i><span>Set Budget &amp; Savings Goals</span></li>
+                    <li><i class="bi bi-pie-chart-fill" aria-hidden="true"></i><span>See Reports &amp; Insights</span></li>
+                </ul>
+            </div>
+            <img class="login-hero" src="~/images/login-finance-hero.png" asp-append-version="true" alt="" width="1024" height="1536" fetchpriority="high" />
+        </aside>
+        <main class="login-main" id="main-content">@RenderBody()</main>
+    </div>
+    <partial name="_Alerts" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

@@ -1,46 +1,47 @@
-@model LoginViewModel
+﻿@model LoginViewModel
 @{
     ViewData["Title"] = "Sign in";
-    Layout = "_AuthLayout";
+    Layout = "_LoginLayout";
 }
-<div class="auth-card">
-    <h1 class="auth-title">Welcome back</h1>
-    <p class="text-body-secondary mb-4">Sign in to continue to your dashboard.</p>
-
+<div class="login-card">
+    <a class="login-brand login-brand-card" asp-controller="Account" asp-action="Login" aria-label="TakaTrack home">
+        <img src="~/favicon.svg" width="60" height="60" alt="" />
+        <span>Taka<strong>Track</strong></span>
+    </a>
+    <header class="login-heading">
+        <h1>Welcome back <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i></h1>
+        <p>Sign in to your TakaTrack account.</p>
+    </header>
     <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate>
-        <div asp-validation-summary="ModelOnly" role="alert"></div>
-
-        <div class="mb-3">
-            <label asp-for="Email" class="form-label"></label>
-            <div class="input-icon">
-                <i class="bi bi-envelope" aria-hidden="true"></i>
-                <input asp-for="Email" class="form-control" autocomplete="email" placeholder="you@example.com" autofocus />
-            </div>
-            <span asp-validation-for="Email"></span>
+        <div asp-validation-summary="ModelOnly" class="login-validation" role="alert"></div>
+        <div class="login-field">
+            <label asp-for="Email"><i class="bi bi-envelope" aria-hidden="true"></i> Email</label>
+            <input asp-for="Email" class="form-control" autocomplete="username" placeholder="you@example.com" aria-describedby="email-error" />
+            <span asp-validation-for="Email" id="email-error"></span>
         </div>
-
-        <div class="mb-3">
-            <label asp-for="Password" class="form-label"></label>
-            <div class="input-icon input-group">
-                <i class="bi bi-lock" aria-hidden="true"></i>
-                <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Your password" />
-                <button class="btn btn-outline-secondary" type="button" data-password-toggle aria-label="Show password">
+        <div class="login-field">
+            <label asp-for="Password"><i class="bi bi-lock" aria-hidden="true"></i> Password</label>
+            <div class="login-password">
+                <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Your password" aria-describedby="password-error" />
+                <button class="login-password-toggle" type="button" data-password-toggle aria-label="Show password" aria-controls="Password">
                     <i class="bi bi-eye" aria-hidden="true"></i>
                 </button>
             </div>
-            <span asp-validation-for="Password"></span>
+            <span asp-validation-for="Password" id="password-error"></span>
         </div>
-
-        <div class="form-check mb-4">
+        <div class="login-options form-check">
             <input asp-for="RememberMe" class="form-check-input" />
             <label asp-for="RememberMe" class="form-check-label"></label>
         </div>
-
-        <button type="submit" class="btn btn-primary w-100 btn-lg-auth" data-loading-text="Signing in…">
+        <button type="submit" class="btn login-submit" data-loading-text="Signing in…">
             Sign in <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
         </button>
     </form>
-
-    <p class="auth-switch">New here? <a asp-action="Register">Create an account</a></p>
+    <div class="login-divider"><span>more ways to sign in · coming soon</span></div>
+    <div class="login-social" aria-label="Additional sign-in options coming soon">
+        <button type="button" disabled><i class="bi bi-google" aria-hidden="true"></i> Continue with Google</button>
+        <button type="button" disabled><i class="bi bi-github" aria-hidden="true"></i> Continue with GitHub</button>
+    </div>
+    <p class="login-switch">New here? <a asp-action="Register">Create an account</a></p>
 </div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }
